@@ -1,0 +1,18 @@
+{
+  "version": "v1",
+  "public": [
+    { "name": "root", "type": "bytes32", "encoding": "uint256" },
+    { "name": "nullifierHash", "type": "bytes32", "encoding": "uint256" },
+    { "name": "recipient", "type": "address", "encoding": "uint160->uint256" },
+    { "name": "relayer", "type": "address", "encoding": "uint160->uint256" },
+    { "name": "fee", "type": "uint256" },
+    { "name": "refund", "type": "uint256" },
+    { "name": "chainId", "type": "uint256" }
+  ],
+  "private": [
+    { "name": "noteSecret", "type": "bytes32" },
+    { "name": "noteRandom", "type": "bytes32" },
+    { "name": "pathElements", "type": "bytes32[]", "length": "treeDepth" },
+    { "name": "pathIndices", "type": "uint8[]", "length": "treeDepth", "domain": [0, 1] }
+  ]
+}

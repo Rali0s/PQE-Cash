@@ -1,0 +1,51 @@
+services:
+  hardhat:
+    build:
+      context: ./contracts
+    container_name: pqe-hardhat
+    ports:
+      - "8545:8545"
+
+  deployer:
+    build:
+      context: ./contracts
+    container_name: pqe-deployer
+    depends_on:
+      - hardhat
+    volumes:
+      - deploy-data:/shared
+    command: >
+      sh -c "
+      until nc -z hardhat 8545; do echo 'waiting for hardhat...'; sleep 1; done;
+      DEPLOY_OUTPUT=/shared/deploy.json npx hardhat run scripts/deploy.js --network docker;
+      cat /shared/deploy.json"
+
+  relayer:
+    build:
+      context: ./relayer
+    container_name: pqe-relayer
+    depends_on:
+      - hardhat
+      - deployer
+    environment:
+      PORT: 8080
+      RPC_URL: http://hardhat:8545
+      RELAYER_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+      MIN_FEE_BPS: 50
+      MAX_FEE_BPS: 300
+      ANON_LOGGING: "true"
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./web
+    container_name: pqe-web
+    depends_on:
+      - relayer
+      - deployer
+    ports:
+      - "5173:5173"
+
+volumes:
+  deploy-data:
