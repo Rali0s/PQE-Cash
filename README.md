@@ -34,6 +34,15 @@ cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
 ADAPTER_ADDRESS=0x... NEW_VERIFIER_ADDRESS=0x... EXPECTED_OLD_VERIFIER=0x... npm run rotate:verifier
 ```
 
+Sepolia deploy:
+```bash
+cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cp env.sample .env
+# fill DEPLOYER_PRIVATE_KEY and EXTERNAL_VERIFIER_ADDRESS
+npm install
+npm run deploy:sepolia
+```
+
 For local-only dev verifier deployments:
 ```bash
 cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
@@ -53,14 +62,26 @@ If Postgres/Redis are not running locally, start them with:
 cd /Users/proteu5/Documents/Github/PQE-Cash
 docker-compose up -d postgres redis
 ```
+Default project ports are isolated to avoid conflicts with other stacks:
+- Postgres: `127.0.0.1:55432`
+- Redis: `127.0.0.1:56379`
+
+Relay operator fee sweep:
+```bash
+cd /Users/proteu5/Documents/Github/PQE-Cash/relayer
+# set RELAYER_PAYOUT_ADDRESS + RELAYER_PRIVATE_KEY + RPC_URL
+npm run sweep:fees
+```
 
 ### 3) Frontend
 ```bash
 cd /Users/proteu5/Documents/Github/PQE-Cash/web
+cp env.sample .env.local
 npm install
 npm run dev
 ```
 Open `http://127.0.0.1:5173`.
+By default the UI uses `/api` and auto-loads relayer health/config (including `defaultPool` when relayer can read deploy JSON).
 
 ### 4) One-command Docker
 ```bash
@@ -79,9 +100,19 @@ This starts:
 - Production deploys require `EXTERNAL_VERIFIER_ADDRESS`; dev verifier deploy is opt-in only.
 - Relayer persists quotes/jobs in Postgres and sessions/nonces/rate limits in Redis.
 - Relayer handshake uses true `ML-KEM-768 (Kyber)` encapsulation + server decapsulation.
+- Relayer publishes runtime config (`/health`, `/config`) including auto-detected `defaultPool` from deploy JSON path when configured.
 - Remote signer mode supports KMS/HSM-style signing services (`SIGNER_MODE=remote`).
 - TLS/mTLS is configurable on relayer listener via `TLS_*` variables.
 - Pool includes owner-controlled `baseRelayerFee`, `protocolFeeBps`, and treasury routing for protocol profit.
 - Protocol fees are custodied in `ProtocolTreasury` with queued timed owner withdrawals.
 - Contracts use OpenZeppelin `Ownable` and `ReentrancyGuard`.
 - Relayer anonymity is privacy-hardened but not absolute; see docs.
+
+## Relay Host Packaging
+- Railway service config: `/Users/proteu5/Documents/Github/PQE-Cash/relayer/railway.json`
+- Host compose stack (good for Raspberry Pi/VPS): `/Users/proteu5/Documents/Github/PQE-Cash/relayer/docker-compose.host.yml`
+- Host env templates:
+  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.host.example`
+  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.railway.example`
+  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.rpi.example`
+- Full runbook: `/Users/proteu5/Documents/Github/PQE-Cash/docs/10-relayer-hosting-scaling-fees.md`

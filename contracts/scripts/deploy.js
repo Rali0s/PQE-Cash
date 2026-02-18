@@ -3,8 +3,22 @@ const fs = require('fs');
 const path = require('path');
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const signers = await hre.ethers.getSigners();
+  if (!signers || signers.length === 0) {
+    throw new Error('No deployer signer found. Set DEPLOYER_PRIVATE_KEY in .env for testnet networks.');
+  }
+  const [deployer] = signers;
   console.log('Deployer:', deployer.address);
+
+  const expectedDeployer = process.env.EXPECTED_DEPLOYER_ADDRESS || '';
+  if (expectedDeployer) {
+    if (!hre.ethers.isAddress(expectedDeployer)) {
+      throw new Error('EXPECTED_DEPLOYER_ADDRESS is not a valid address');
+    }
+    if (deployer.address.toLowerCase() !== expectedDeployer.toLowerCase()) {
+      throw new Error(`Deployer mismatch. expected=${expectedDeployer} got=${deployer.address}`);
+    }
+  }
 
   const backendName = (process.env.EXTERNAL_VERIFIER_BACKEND || 'bytes').toLowerCase();
   const backendMap = { bytes: 0, uint: 1 };
@@ -22,6 +36,13 @@ async function main() {
   if (providedExternalVerifier) {
     if (!hre.ethers.isAddress(providedExternalVerifier)) {
       throw new Error('EXTERNAL_VERIFIER_ADDRESS is not a valid address');
+    }
+    const code = await hre.ethers.provider.getCode(providedExternalVerifier);
+    const hasCode = code && code !== '0x';
+    if (!hasCode && process.env.ALLOW_EOA_EXTERNAL_VERIFIER !== 'true') {
+      throw new Error(
+        `EXTERNAL_VERIFIER_ADDRESS has no code on this network (${providedExternalVerifier}). Set ALLOW_EOA_EXTERNAL_VERIFIER=true to bypass.`
+      );
     }
     externalVerifierAddress = providedExternalVerifier;
   } else if (allowDevVerifier) {

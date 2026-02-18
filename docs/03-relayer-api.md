@@ -22,9 +22,14 @@ Response:
   "signer": "0x...",
   "pqKemAlgorithm": "ML-KEM-768",
   "minFeeBps": 50,
-  "maxFeeBps": 300
+  "maxFeeBps": 300,
+  "defaultPool": "0x...",
+  "deployConfigLoadedAt": 1735689480000
 }
 ```
+
+## `GET /config`
+Runtime public config payload (same metadata subset used by frontend bootstrap).
 
 ## `GET /metrics`
 Prometheus metrics endpoint.
@@ -95,9 +100,15 @@ Response:
   },
   "quoteSignature": "0x...",
   "ttlSec": 120,
-  "signer": "0x..."
+  "signer": "0x...",
+  "requestedFeeBps": 50,
+  "baseRelayerFee": "1000000000000000",
+  "minFeeBpsForPool": 100
 }
 ```
+
+Notes:
+- Relayer enforces pool base fee floor by adjusting effective quote fee/bps upward when needed.
 
 ## `POST /submit`
 Submits an encrypted withdrawal payload.

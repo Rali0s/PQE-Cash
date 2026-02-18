@@ -15,3 +15,8 @@ coverage
 relayer/.env.example
 *.bak
 relayer/.env
+contracts/env copy.sample
+relayer/.env.example
+relayer/.env.example
+web/env.sample
+relayer/.env.example

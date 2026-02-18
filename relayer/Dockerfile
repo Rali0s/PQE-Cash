@@ -1,7 +1,12 @@
 FROM node:20-alpine
 WORKDIR /app
+ENV NODE_ENV=production
+
 COPY package*.json ./
-RUN npm install
-COPY . .
+RUN npm ci --omit=dev
+
+COPY src ./src
+COPY scripts ./scripts
+
 EXPOSE 8080
-CMD ["npm", "run", "dev"]
+CMD ["node", "src/server.js"]

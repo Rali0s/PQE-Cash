@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "start:prod": "NODE_ENV=production node src/server.js",
+    "sweep:fees": "node scripts/sweep-fees.js"
   },
   "dependencies": {
     "@noble/post-quantum": "^0.5.4",

@@ -62,13 +62,18 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-input, button {
+input, textarea, button, select {
   width: 100%;
   margin-top: 8px;
   padding: 10px;
   border: 2px solid var(--edge);
   background: #021216;
   color: var(--text);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
 }
 
 button {
@@ -81,10 +86,54 @@ button:hover {
   color: var(--accent);
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: #1a3d47;
+  color: #7ba6b3;
+}
+
 .row {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.hint.ok {
+  color: #88ffd0;
+}
+
+.hint.warn {
+  color: #ffd17c;
+}
+
+.hint.action {
+  color: #9fddff;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 70px;
+  text-align: center;
+  padding: 2px 8px;
+  border: 1px solid #1ed2ff;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.badge.ok {
+  color: #88ffd0;
+  border-color: #3cff93;
+}
+
+.badge.warn {
+  color: #ffd17c;
+  border-color: #ff9e4f;
 }
 
 pre {

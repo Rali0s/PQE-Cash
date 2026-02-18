@@ -13,11 +13,9 @@ docker compose up --build
 - `relayer`: API on `localhost:8080`
 - `web`: UI on `localhost:5173`
 
-## Get deployed addresses
-```bash
-docker logs bluearc-deployer
-```
-Copy `privacyPool` address into the web UI.
+## Pool auto-discovery
+`relayer` mounts deploy volume read-only and reads `/shared/deploy.json`.
+UI calls relayer `/health` and auto-fills `defaultPool` when available.
 
 ## Relayer health and metrics
 ```bash

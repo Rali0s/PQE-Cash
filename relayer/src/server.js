@@ -17,6 +17,7 @@ import { createSigner } from './signer.js';
 
 const poolAbi = [
   'function denomination() view returns (uint256)',
+  'function baseRelayerFee() view returns (uint256)',
   'function withdraw(bytes proof, bytes32 root, bytes32 nullifierHash, address recipient, address relayer, uint256 fee, uint256 refund)'
 ];
 
@@ -103,6 +104,8 @@ const RATE_LIMIT_STATUS = envNum('RATE_LIMIT_STATUS', 120);
 const ABUSE_TTL_MS = envNum('ABUSE_TTL_MS', 900_000);
 const ABUSE_BLOCK_THRESHOLD = envNum('ABUSE_BLOCK_THRESHOLD', 25);
 const SERVER_KEY_ROTATE_MS = envNum('SERVER_KEY_ROTATE_MS', 3_600_000);
+const DEPLOY_JSON_PATH = process.env.DEPLOY_JSON_PATH || '';
+const DEPLOY_REFRESH_MS = envNum('DEPLOY_REFRESH_MS', 10_000);
 const STORAGE_PRUNE_INTERVAL_MS = envNum('STORAGE_PRUNE_INTERVAL_MS', 300_000);
 const QUOTE_RETENTION_MS = envNum('QUOTE_RETENTION_MS', 3_600_000);
 const JOB_RETENTION_MS = envNum('JOB_RETENTION_MS', 86_400_000);
@@ -203,6 +206,8 @@ const submitRejectedTotal = new Counter({
 let signerAddress;
 let consecutiveFailureCount = 0;
 let keyMaterial = rotateServerKey();
+let runtimePoolAddress = null;
+let runtimeDeployLoadedAt = 0;
 
 function rotateServerKey() {
   const ecdh = crypto.createECDH('prime256v1');
@@ -226,11 +231,38 @@ function getActiveServerKey() {
   return keyMaterial;
 }
 
+function loadDeployRuntimeConfig() {
+  if (!DEPLOY_JSON_PATH) {
+    runtimePoolAddress = null;
+    runtimeDeployLoadedAt = Date.now();
+    return;
+  }
+
+  try {
+    if (!fs.existsSync(DEPLOY_JSON_PATH)) {
+      runtimePoolAddress = null;
+      runtimeDeployLoadedAt = Date.now();
+      return;
+    }
+    const raw = fs.readFileSync(DEPLOY_JSON_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    const candidate = typeof parsed.privacyPool === 'string' ? parsed.privacyPool : '';
+    runtimePoolAddress = ethers.isAddress(candidate) ? candidate : null;
+    runtimeDeployLoadedAt = Date.now();
+  } catch (error) {
+    logger.warn({ error: error.message, path: DEPLOY_JSON_PATH }, 'failed to load deploy runtime config');
+  }
+}
+
 function quoteDigest(quote) {
   return ethers.solidityPackedKeccak256(
     ['string', 'string', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
     ['BLUEARC_QUOTE_V1', quote.quoteId, quote.pool, BigInt(quote.feeBps), BigInt(quote.fee), BigInt(quote.chainId), BigInt(quote.expiresAt)]
   );
+}
+
+function ceilDiv(a, b) {
+  return (a + b - 1n) / b;
 }
 
 function updateHashLenPrefixed(hash, value) {
@@ -385,10 +417,31 @@ app.get('/health', async (_req, res) => {
       signer: signerAddress,
       pqKemAlgorithm: 'ML-KEM-768',
       minFeeBps: MIN_FEE_BPS,
-      maxFeeBps: MAX_FEE_BPS
+      maxFeeBps: MAX_FEE_BPS,
+      proofMaxBytes: PROOF_MAX_BYTES,
+      defaultPool: runtimePoolAddress,
+      deployConfigLoadedAt: runtimeDeployLoadedAt
     });
   } catch (error) {
     return res.status(503).json({ ok: false, error: error.message });
+  }
+});
+
+app.get('/config', async (_req, res) => {
+  try {
+    const network = await provider.getNetwork();
+    return res.json({
+      chainId: Number(network.chainId),
+      signer: signerAddress,
+      pqKemAlgorithm: 'ML-KEM-768',
+      minFeeBps: MIN_FEE_BPS,
+      maxFeeBps: MAX_FEE_BPS,
+      proofMaxBytes: PROOF_MAX_BYTES,
+      defaultPool: runtimePoolAddress,
+      deployConfigLoadedAt: runtimeDeployLoadedAt
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -478,14 +531,23 @@ app.post('/quote', makeRedisRateLimiter('quote', RATE_LIMIT_QUOTE), async (req, 
       return res.status(403).json({ error: 'pool not allowlisted' });
     }
 
-    const feeBps = parsed.data.feeBps ?? MIN_FEE_BPS;
-    if (feeBps < MIN_FEE_BPS || feeBps > MAX_FEE_BPS) {
+    const requestedFeeBps = parsed.data.feeBps ?? MIN_FEE_BPS;
+    if (requestedFeeBps < MIN_FEE_BPS || requestedFeeBps > MAX_FEE_BPS) {
       return res.status(400).json({ error: 'feeBps out of bounds' });
     }
 
     const poolContract = new ethers.Contract(pool, poolAbi, provider);
     const denomination = await poolContract.denomination();
+    const baseRelayerFee = await poolContract.baseRelayerFee();
+    const minBpsFromBase = Number(ceilDiv(baseRelayerFee * 10_000n, denomination));
+    const feeBps = Math.max(requestedFeeBps, minBpsFromBase);
+    if (feeBps > MAX_FEE_BPS) {
+      return res.status(400).json({
+        error: `pool baseRelayerFee requires at least ${minBpsFromBase} bps, above MAX_FEE_BPS=${MAX_FEE_BPS}`
+      });
+    }
     const fee = (denomination * BigInt(feeBps)) / 10_000n;
+    const effectiveFee = fee < baseRelayerFee ? baseRelayerFee : fee;
     const quoteId = crypto.randomUUID();
     const now = Date.now();
     const chainId = Number((await provider.getNetwork()).chainId);
@@ -493,7 +555,7 @@ app.post('/quote', makeRedisRateLimiter('quote', RATE_LIMIT_QUOTE), async (req, 
       quoteId,
       pool,
       feeBps,
-      fee: fee.toString(),
+      fee: effectiveFee.toString(),
       chainId,
       expiresAt: now + QUOTE_TTL_MS,
       issuedAt: now
@@ -512,7 +574,10 @@ app.post('/quote', makeRedisRateLimiter('quote', RATE_LIMIT_QUOTE), async (req, 
       quote,
       quoteSignature: signature,
       ttlSec: Math.floor(QUOTE_TTL_MS / 1000),
-      signer: signerAddress
+      signer: signerAddress,
+      requestedFeeBps,
+      baseRelayerFee: baseRelayerFee.toString(),
+      minFeeBpsForPool: minBpsFromBase
     });
   } catch (error) {
     req.log.error({ error: error.message }, 'quote failed');
@@ -758,6 +823,7 @@ async function start() {
   await storage.init();
   await storage.ping();
   signerAddress = await signer.getAddress();
+  loadDeployRuntimeConfig();
 
   const pruneHandle = setInterval(async () => {
     try {
@@ -771,6 +837,11 @@ async function start() {
     }
   }, STORAGE_PRUNE_INTERVAL_MS);
   pruneHandle.unref();
+
+  const deployConfigHandle = setInterval(() => {
+    loadDeployRuntimeConfig();
+  }, DEPLOY_REFRESH_MS);
+  deployConfigHandle.unref();
 
   const { server, protocol, mtls } = createServer();
   server.listen(PORT, HOST, () => {

@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d bluearc"]
       interval: 5s
@@ -20,6 +22,8 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
+    ports:
+      - "56379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -76,6 +80,8 @@ services:
       RPC_URL: http://hardhat:8545
       POSTGRES_URL: postgres://postgres:postgres@postgres:5432/bluearc
       REDIS_URL: redis://redis:6379
+      DEPLOY_JSON_PATH: /shared/deploy.json
+      DEPLOY_REFRESH_MS: 5000
       SIGNER_MODE: local
       RELAYER_PRIVATE_KEY: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
       MIN_FEE_BPS: 50
@@ -97,6 +103,8 @@ services:
       ALLOW_INSECURE_HTTP: "true"
       ANON_LOGGING: "true"
       LOG_LEVEL: info
+    volumes:
+      - deploy-data:/shared:ro
     ports:
       - "8080:8080"
     healthcheck:
@@ -116,6 +124,9 @@ services:
         condition: service_completed_successfully
     ports:
       - "5173:5173"
+    environment:
+      VITE_RELAYER_URL: /api
+      VITE_API_PROXY_TARGET: http://relayer:8080
 
 volumes:
   deploy-data:
