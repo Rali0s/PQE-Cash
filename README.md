@@ -6,6 +6,10 @@ Post-quantum-oriented privacy pool with:
 - React frontend with 8-bit green/blue UI (`web/`)
 - Design and API docs (`docs/`)
 - One-command containers (`docker-compose.yml`)
+  
+## Front-End:
+![Alt text](connect.jpg)
+![Alt text](deposit.jpg)
 
 Branding:
 - Product: `BlueARC`
@@ -123,7 +127,4 @@ This starts:
   - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.railway.example`
   - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.rpi.example`
 - Full runbook: `/Users/proteu5/Documents/Github/PQE-Cash/docs/10-relayer-hosting-scaling-fees.md`
-
-## Front-End:
-![Alt text](assets/connect.jpg)
 
