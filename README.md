@@ -111,8 +111,19 @@ This starts:
 ## Relay Host Packaging
 - Railway service config: `/Users/proteu5/Documents/Github/PQE-Cash/relayer/railway.json`
 - Host compose stack (good for Raspberry Pi/VPS): `/Users/proteu5/Documents/Github/PQE-Cash/relayer/docker-compose.host.yml`
+
+- ## SepoliaETH
+- Deployer: 0x5F1667Ee0aAAF2bF9750125598FA3f7657882C12
+- ExternalVerifier: 0x5d9aB94bB4B0d4b7660Ce5F44dE46894DF0D2466 (backend=bytes, deployed=true)
+- PqVerifierAdapter: 0x5245355b3e43837B3D519DFff3Da272Ab151Ff92
+- PrivacyPool: 0x0999D3Aa4e8CF3F4A2d1D855d3D4874984df0083
+
 - Host env templates:
   - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.host.example`
   - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.railway.example`
   - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.rpi.example`
 - Full runbook: `/Users/proteu5/Documents/Github/PQE-Cash/docs/10-relayer-hosting-scaling-fees.md`
+
+## Front-End:
+![Alt text](assets/connect.jpg)
+
