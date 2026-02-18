@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ethers } from 'ethers';
+import { ml_kem768 } from '@noble/post-quantum/ml-kem.js';
 
 const POOL_ABI = [
   'function deposit(bytes32 commitment) payable',
@@ -45,7 +46,32 @@ function hexToBytes(hex) {
   return out;
 }
 
-async function deriveSessionKey(serverPubB64, pqSecretBytes) {
+function concatBytes(parts) {
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function uint32BE(value) {
+  const out = new Uint8Array(4);
+  new DataView(out.buffer).setUint32(0, value, false);
+  return out;
+}
+
+function lenPrefixed(bytes) {
+  return concatBytes([uint32BE(bytes.length), bytes]);
+}
+
+async function deriveSessionArtifacts({ keyId, serverEcdhPublicKey, pqKemAlgorithm, pqKemPublicKey, pqKemCiphertextBytes }) {
+  if (pqKemAlgorithm !== 'ML-KEM-768') {
+    throw new Error(`Unsupported PQ KEM algorithm: ${pqKemAlgorithm}`);
+  }
+
   const clientKeyPair = await crypto.subtle.generateKey(
     { name: 'ECDH', namedCurve: 'P-256' },
     true,
@@ -53,7 +79,7 @@ async function deriveSessionKey(serverPubB64, pqSecretBytes) {
   );
 
   const clientPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', clientKeyPair.publicKey));
-  const serverPubRaw = b64ToBytes(serverPubB64);
+  const serverPubRaw = b64ToBytes(serverEcdhPublicKey);
   const serverPubKey = await crypto.subtle.importKey(
     'raw',
     serverPubRaw,
@@ -69,16 +95,28 @@ async function deriveSessionKey(serverPubB64, pqSecretBytes) {
   );
 
   const classicalSecret = new Uint8Array(sharedBits);
-  const concat = new Uint8Array(classicalSecret.length + pqSecretBytes.length);
-  concat.set(classicalSecret, 0);
-  concat.set(pqSecretBytes, classicalSecret.length);
+  const kemPublicKey = b64ToBytes(pqKemPublicKey);
+  const { cipherText, sharedSecret } = ml_kem768.encapsulate(kemPublicKey);
+  if (pqKemCiphertextBytes && cipherText.length !== pqKemCiphertextBytes) {
+    throw new Error('PQ KEM ciphertext length mismatch');
+  }
 
-  const sessionHash = await crypto.subtle.digest('SHA-256', concat);
+  const encoder = new TextEncoder();
+  const transcript = concatBytes([
+    encoder.encode('BLUEARC_HYBRID_MLKEM_V1'),
+    lenPrefixed(encoder.encode(keyId || '')),
+    lenPrefixed(clientPubRaw),
+    lenPrefixed(serverPubRaw),
+    lenPrefixed(cipherText),
+    lenPrefixed(classicalSecret),
+    lenPrefixed(sharedSecret)
+  ]);
+  const sessionHash = await crypto.subtle.digest('SHA-256', transcript);
   const sessionKeyBytes = new Uint8Array(sessionHash);
 
   return {
     clientPubB64: bytesToB64(clientPubRaw),
-    pqSecretB64: bytesToB64(pqSecretBytes),
+    pqKemCiphertextB64: bytesToB64(cipherText),
     sessionKeyHex: bytesToHex(sessionKeyBytes)
   };
 }
@@ -154,15 +192,15 @@ export default function App() {
     const keyData = await keyResp.json();
     if (!keyResp.ok) throw new Error(JSON.stringify(keyData));
 
-    const pqSecret = crypto.getRandomValues(new Uint8Array(32));
-    const derived = await deriveSessionKey(keyData.serverEcdhPublicKey, pqSecret);
+    const derived = await deriveSessionArtifacts(keyData);
 
     const openResp = await fetch(`${relayerUrl}/handshake/open`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
+        keyId: keyData.keyId,
         clientEcdhPublicKey: derived.clientPubB64,
-        pqSharedSecret: derived.pqSecretB64
+        pqKemCiphertext: derived.pqKemCiphertextB64
       })
     });
 

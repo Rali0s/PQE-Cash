@@ -1,6 +1,8 @@
 node_modules
 dist
 .env
+.env*
+.env.*
 .DS_Store
 .vscode
 .idea
@@ -10,3 +12,6 @@ coverage
 *.log
 *.tmp
 *.bak
+relayer/.env.example
+*.bak
+relayer/.env

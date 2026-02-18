@@ -6,10 +6,36 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   console.log('Deployer:', deployer.address);
 
-  const externalVerifier = await hre.ethers.deployContract('DevExternalPqVerifier');
-  await externalVerifier.waitForDeployment();
+  const backendName = (process.env.EXTERNAL_VERIFIER_BACKEND || 'bytes').toLowerCase();
+  const backendMap = { bytes: 0, uint: 1 };
+  if (!(backendName in backendMap)) {
+    throw new Error('EXTERNAL_VERIFIER_BACKEND must be "bytes" or "uint"');
+  }
+  const backendType = backendMap[backendName];
 
-  const verifierAdapter = await hre.ethers.deployContract('PqVerifierAdapter', [await externalVerifier.getAddress()]);
+  const providedExternalVerifier = process.env.EXTERNAL_VERIFIER_ADDRESS || '';
+  const allowDevVerifier = process.env.ALLOW_DEV_VERIFIER === 'true';
+
+  let externalVerifierAddress;
+  let externalVerifierDeployed = false;
+
+  if (providedExternalVerifier) {
+    if (!hre.ethers.isAddress(providedExternalVerifier)) {
+      throw new Error('EXTERNAL_VERIFIER_ADDRESS is not a valid address');
+    }
+    externalVerifierAddress = providedExternalVerifier;
+  } else if (allowDevVerifier) {
+    const externalVerifier = await hre.ethers.deployContract('DevExternalPqVerifier');
+    await externalVerifier.waitForDeployment();
+    externalVerifierAddress = await externalVerifier.getAddress();
+    externalVerifierDeployed = true;
+  } else {
+    throw new Error(
+      'Production deployment requires EXTERNAL_VERIFIER_ADDRESS. For local/dev only, set ALLOW_DEV_VERIFIER=true.'
+    );
+  }
+
+  const verifierAdapter = await hre.ethers.deployContract('PqVerifierAdapter', [externalVerifierAddress, backendType]);
   await verifierAdapter.waitForDeployment();
   const treasury = await hre.ethers.deployContract('ProtocolTreasury', [3600]);
   await treasury.waitForDeployment();
@@ -29,7 +55,9 @@ async function main() {
   const out = {
     chainId: Number((await hre.ethers.provider.getNetwork()).chainId),
     deployer: deployer.address,
-    externalVerifier: await externalVerifier.getAddress(),
+    externalVerifier: externalVerifierAddress,
+    externalVerifierBackend: backendName,
+    externalVerifierDeployed,
     verifierAdapter: await verifierAdapter.getAddress(),
     treasury: await treasury.getAddress(),
     privacyPool: await pool.getAddress(),
@@ -38,7 +66,7 @@ async function main() {
     protocolFeeBps
   };
 
-  console.log('DevExternalPqVerifier:', out.externalVerifier);
+  console.log('ExternalVerifier:', out.externalVerifier, `(backend=${backendName}, deployed=${externalVerifierDeployed})`);
   console.log('PqVerifierAdapter:', out.verifierAdapter);
   console.log('PrivacyPool:', out.privacyPool);
   console.log('Denomination (wei):', out.denomination);

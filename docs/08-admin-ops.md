@@ -1,5 +1,21 @@
 # 8. Admin Ops
 
+## Deploy with real verifier (production default)
+
+`scripts/deploy.js` now requires `EXTERNAL_VERIFIER_ADDRESS` unless `ALLOW_DEV_VERIFIER=true` is explicitly set.
+
+```bash
+cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+EXTERNAL_VERIFIER_ADDRESS=0x... \
+EXTERNAL_VERIFIER_BACKEND=bytes \
+npm run deploy:local
+```
+
+For local sandbox only:
+```bash
+ALLOW_DEV_VERIFIER=true npm run deploy:local
+```
+
 ## Rotate external verifier safely
 
 ```bash
@@ -16,6 +32,12 @@ Checks performed by script:
 - Sends `setExternalVerifier(newVerifier)`.
 - Verifies `ExternalVerifierUpdated(previous,new)` event exists exactly once.
 - Re-reads adapter state and confirms `externalVerifier == newVerifier`.
+
+Optional backend switch (bytes/uint) is owner-controlled in `PqVerifierAdapter`:
+```solidity
+setBackendType(BackendType.Bytes)
+setBackendType(BackendType.Uint)
+```
 
 Script path:
 - `/Users/proteu5/Documents/Github/PQE-Cash/contracts/scripts/rotate-verifier.js`

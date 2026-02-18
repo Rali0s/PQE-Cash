@@ -7,7 +7,7 @@ describe('PrivacyPool', function () {
 
     const externalVerifier = await ethers.deployContract('DevExternalPqVerifier');
     await externalVerifier.waitForDeployment();
-    const adapter = await ethers.deployContract('PqVerifierAdapter', [await externalVerifier.getAddress()]);
+    const adapter = await ethers.deployContract('PqVerifierAdapter', [await externalVerifier.getAddress(), 0]);
     await adapter.waitForDeployment();
 
     const denom = ethers.parseEther('0.1');
@@ -29,6 +29,13 @@ describe('PrivacyPool', function () {
     await expect(pool.connect(user).deposit(commitment, { value: denom })).to.emit(pool, 'Deposit');
 
     const root = await pool.currentRoot();
+    const siblings = [];
+    for (let i = 0; i < 20; i += 1) {
+      siblings.push(await pool.zeros(i));
+    }
+    expect(await pool.computeRootFromPath(commitment, siblings, 0)).to.equal(root);
+    expect(await pool.verifyMerklePath(commitment, siblings, 0, root)).to.equal(true);
+
     const nullifier = ethers.keccak256(ethers.toUtf8Bytes('nullifier-1'));
     const fee = ethers.parseEther('0.01');
     const protocolFee = (denom * protocolFeeBps) / 10000n;

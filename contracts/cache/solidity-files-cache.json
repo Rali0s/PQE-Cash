@@ -38,8 +38,8 @@
       ]
     },
     "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/PrivacyPool.sol": {
-      "lastModificationDate": 1770876512783,
-      "contentHash": "cdb95887e29062b075272b0d009e1c8b",
+      "lastModificationDate": 1771429177039,
+      "contentHash": "1972cd48233b9a645988ec57940e495d",
       "sourceName": "contracts/PrivacyPool.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -227,8 +227,8 @@
       ]
     },
     "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/PqVerifierAdapter.sol": {
-      "lastModificationDate": 1770875987916,
-      "contentHash": "92a3a0bf9c32ec298b0c004e0bf968ca",
+      "lastModificationDate": 1771429131082,
+      "contentHash": "2247f81157370aee87343d79b2d4feb5",
       "sourceName": "contracts/PqVerifierAdapter.sol",
       "solcConfig": {
         "version": "0.8.24",
@@ -256,6 +256,7 @@
       },
       "imports": [
         "./IVerifier.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
         "./IExternalPqVerifier.sol"
       ],
       "versionPragmas": [

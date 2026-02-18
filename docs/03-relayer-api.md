@@ -1,48 +1,77 @@
 # 3. Relayer API with PQ-Hybrid Handshake
 
-Base URL: `http://127.0.0.1:8080`
+Base URL:
+- Development: `http://127.0.0.1:8080`
+- Production: `https://<relayer-host>` (TLS required, optional mTLS)
+
+## Transport + Security
+- `TLS_CERT_PATH` + `TLS_KEY_PATH` enable HTTPS listener.
+- `TLS_REQUIRE_CLIENT_CERT=true` + `TLS_CA_PATH` enforce mTLS.
+- If `NODE_ENV=production`, set TLS or explicitly allow insecure mode via `ALLOW_INSECURE_HTTP=true`.
+- Sessions, nonce replay windows, and abuse/rate-limit counters are persisted in Redis.
+- Quotes and jobs are persisted in Postgres.
 
 ## `GET /health`
-Returns relayer config readiness.
+Dependency readiness check.
+
+Response:
+```json
+{
+  "ok": true,
+  "chainId": 31337,
+  "signer": "0x...",
+  "pqKemAlgorithm": "ML-KEM-768",
+  "minFeeBps": 50,
+  "maxFeeBps": 300
+}
+```
+
+## `GET /metrics`
+Prometheus metrics endpoint.
 
 ## `GET /handshake/server-key`
-Returns server ECDH key metadata.
+Returns active hybrid key material metadata (ECDH + ML-KEM-768 public key).
 
 Response:
 ```json
 {
   "keyId": "uuid",
   "curve": "prime256v1",
-  "serverEcdhPublicKey": "base64"
+  "serverEcdhPublicKey": "base64",
+  "pqKemAlgorithm": "ML-KEM-768",
+  "pqKemPublicKey": "base64",
+  "pqKemCiphertextBytes": 1088,
+  "expiresAt": 1735689600000
 }
 ```
 
 ## `POST /handshake/open`
-Creates an authenticated session context.
+Creates a short-lived encrypted session.
 
 Request:
 ```json
 {
+  "keyId": "uuid (optional)",
   "clientEcdhPublicKey": "base64",
-  "pqSharedSecret": "base64 (optional)"
+  "pqKemCiphertext": "base64"
 }
 ```
 
-Session key schedule (V1):
-`session_key = SHA256(classical_ecdh_secret || pq_shared_secret)`
+Session key schedule (V2):
+`session_key = SHA256("BLUEARC_HYBRID_MLKEM_V1" || len(keyId) || keyId || len(client_ecdh_pub) || client_ecdh_pub || len(server_ecdh_pub) || server_ecdh_pub || len(pq_kem_ciphertext) || pq_kem_ciphertext || len(classical_ecdh_secret) || classical_ecdh_secret || len(ml_kem_shared_secret) || ml_kem_shared_secret)`
 
 Response:
 ```json
 {
   "sessionId": "uuid",
   "expiresInSec": 600,
-  "keySchedule": "sha256(classical_ecdh || pq_secret)",
+  "keySchedule": "sha256(bluearc_hybrid_mlkem_v1 transcript)",
   "submitMode": "encrypted-envelope-v1"
 }
 ```
 
 ## `POST /quote`
-Request withdrawal fee quote.
+Requests relayer quote.
 
 Request:
 ```json
@@ -61,7 +90,8 @@ Response:
     "feeBps": 80,
     "fee": "1000000000000000",
     "chainId": 31337,
-    "expiresAt": 1735689600000
+    "expiresAt": 1735689600000,
+    "issuedAt": 1735689480000
   },
   "quoteSignature": "0x...",
   "ttlSec": 120,
@@ -70,7 +100,7 @@ Response:
 ```
 
 ## `POST /submit`
-Submit an encrypted withdrawal envelope to be broadcast by relayer.
+Submits an encrypted withdrawal payload.
 
 Request:
 ```json
@@ -85,7 +115,7 @@ Request:
 }
 ```
 
-Decrypted payload JSON (inside envelope):
+Decrypted payload:
 ```json
 {
   "nonce": "uuid-v4",
@@ -108,20 +138,6 @@ Decrypted payload JSON (inside envelope):
 }
 ```
 
-AEAD mode:
-- `AES-256-GCM`
-- `key = SHA256(classical_ecdh_secret || pq_shared_secret)`
-- `aad = sessionId` (or provided `aad`)
-
-Replay protection:
-- `nonce` must be unique per session.
-- `expiresAt` must be in the future and within session expiry.
-- Reused nonce returns `409 replay detected`.
-
-Quote tamper protection:
-- Quote payload is signed by relayer signer at `/quote`.
-- `/submit` re-verifies `quoteSignature` and quote fields before tx broadcast.
-
 Response:
 ```json
 {
@@ -132,15 +148,26 @@ Response:
 ```
 
 ## `GET /status/:jobId`
-Returns one of: `queued | broadcasting | pending | confirmed | failed`
+Returns one of:
+- `queued`
+- `broadcasting`
+- `pending`
+- `confirmed`
+- `failed`
 
-## Privacy/Anon Behavior in V1
-- Minimal logging mode is default (`ANON_LOGGING=true`).
-- No persistent DB; in-memory job/session state.
-- No IP retention logic in app code.
-- For stronger transport anonymity, deploy behind Tor hidden service or VPN fronting.
+## Anti-Tamper + Replay Controls
+- Quote digest signed at `/quote`; verified again at `/submit`.
+- Encrypted submit requires valid session key + AEAD tag.
+- Per-session nonce keys persisted with TTL and replay rejection (`409`).
+- Payload expiry bounded by session expiry and configurable max age.
+- Optional session fingerprint binding (`ENFORCE_SESSION_BINDING=true`).
 
-## Production Upgrade Path
-- Replace `pqSharedSecret` placeholder with true ML-KEM encapsulation/decapsulation.
-- Persist used nonces with bounded TTL in a hardened datastore.
-- Add signed quote revocation list and strict rate-limits.
+## Abuse Controls
+- Redis-backed route limits by source.
+- Abuse score buckets with temporary blocking threshold.
+- Optional pool allowlist (`POOL_ALLOWLIST`).
+- Proof size upper bound (`PROOF_MAX_BYTES`).
+
+## Signer Modes
+- `SIGNER_MODE=local`: local private key.
+- `SIGNER_MODE=remote`: KMS/HSM service over HTTPS (`/v1/sign-message`, `/v1/sign-transaction`).
