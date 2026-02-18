@@ -9,7 +9,7 @@ Post-quantum-oriented privacy pool with:
   
 ## Front-End:
 ![Alt text](connect.jpg)
-![Alt text](deposit.jpg)
+![Alt text](deposit.png)
 
 Branding:
 - Product: `BlueARC`
