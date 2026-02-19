@@ -1,0 +1,24 @@
+{
+  "id": "legacy/relayer-api",
+  "title": "3. Relayer API with PQ-Hybrid Handshake",
+  "description": "Base URL:",
+  "source": "@site/docs/legacy/03-relayer-api.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/relayer-api",
+  "permalink": "/doc/docs/legacy/relayer-api",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "2. Exact Public/Private Signal Schema",
+    "permalink": "/doc/docs/legacy/circuit-signal-schema"
+  },
+  "next": {
+    "title": "4. BlueARC Product Spec",
+    "permalink": "/doc/docs/legacy/product-spec"
+  }
+}

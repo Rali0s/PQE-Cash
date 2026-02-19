@@ -43,6 +43,33 @@ body {
   animation: pulse 3s infinite;
 }
 
+.testnet-banner {
+  margin-bottom: 12px;
+  border: 2px solid #5ec8ff;
+  background: linear-gradient(90deg, rgba(0, 54, 96, 0.7), rgba(4, 38, 44, 0.9));
+  padding: 10px 12px;
+  color: #c9f3ff;
+  text-shadow: 0 0 6px rgba(30, 210, 255, 0.35);
+}
+
+.testnet-banner a {
+  color: #8fffbe;
+}
+
+.testnet-banner a:hover {
+  color: #b7ffd8;
+}
+
+.hero-art {
+  margin-top: 12px;
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+  border: 2px solid var(--edge);
+  image-rendering: pixelated;
+  display: block;
+}
+
 @keyframes pulse {
   0% { box-shadow: 0 0 0 rgba(30, 210, 255, 0.3); }
   50% { box-shadow: 0 0 22px rgba(30, 210, 255, 0.35); }
@@ -62,13 +89,19 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
-input, textarea, button, select {
+input:not([type='checkbox']), textarea, button, select {
   width: 100%;
   margin-top: 8px;
   padding: 10px;
   border: 2px solid var(--edge);
   background: #021216;
   color: var(--text);
+}
+
+input[type='checkbox'] {
+  width: auto;
+  margin: 0 6px 0 0;
+  padding: 0;
 }
 
 textarea {

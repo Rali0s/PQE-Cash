@@ -1,0 +1,24 @@
+{
+  "id": "legacy/poseidon-p0-p3-checklist",
+  "title": "Poseidon P0-P3 Checklist (Execution Tracker)",
+  "description": "P0 Design Lock",
+  "source": "@site/docs/legacy/12-poseidon-p0-p3-checklist.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/poseidon-p0-p3-checklist",
+  "permalink": "/doc/docs/legacy/poseidon-p0-p3-checklist",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 12,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Real Proof Generation Plan (BlueARC)",
+    "permalink": "/doc/docs/legacy/real-proof-generation-plan"
+  },
+  "next": {
+    "title": "Sepolia Release Runbook (PrivacyPoolV2)",
+    "permalink": "/doc/docs/legacy/sepolia-release-runbook"
+  }
+}

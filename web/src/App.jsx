@@ -31,8 +31,21 @@ const TREASURY_ABI = [
   'function executeWithdrawal(uint256 requestId)'
 ];
 
-const RELAYER_DEFAULT = import.meta.env.VITE_RELAYER_URL || '/api';
-const POOL_DEFAULT = import.meta.env.VITE_POOL_ADDRESS || '';
+const RELAYER_DEFAULT =
+  import.meta.env.VITE_RELAYER_URL || 'https://relayer-production-86ea.up.railway.app';
+const POOL_V2_HARDCODED = '0xBeBE31Bf60f55CfE7caC13162e88a628eB637667';
+const POOL_DEFAULT = import.meta.env.VITE_POOL_ADDRESS || POOL_V2_HARDCODED;
+const PROOF_VERSION_DEFAULT = import.meta.env.VITE_PROOF_VERSION || 'bluearc-v2';
+const POOL_VERSION_DEFAULT = import.meta.env.VITE_POOL_VERSION || 'v2';
+const DEV_PROOF_DEFAULT = import.meta.env.VITE_DEV_PROOF || '0x01';
+const RELAYER_API_OPTIONS = [
+  {
+    id: 'railway',
+    label: 'BlueARC Relay (Railway)',
+    url: 'https://relayer-production-86ea.up.railway.app'
+  },
+  { id: 'local', label: 'Local Relayer (127.0.0.1:8080)', url: 'http://127.0.0.1:8080' }
+];
 
 function randHex32() {
   return ethers.hexlify(ethers.randomBytes(32));
@@ -369,9 +382,21 @@ async function encryptEnvelope(sessionKeyHex, sessionId, payload) {
 }
 
 export default function App() {
+  const currentPath = window.location.pathname || '/';
+  const shouldRedirectLegacyDocsPath =
+    currentPath === '/docs' || currentPath === '/docs/' || currentPath.startsWith('/docs/');
+  const isAdminRoute = window.location.pathname.startsWith('/admin');
+  const isTigerDocsRoute = window.location.pathname.startsWith('/tiger-docs');
+  const matchedPreset = RELAYER_API_OPTIONS.find(
+    (opt) => normalizeBaseUrl(opt.url) === normalizeBaseUrl(RELAYER_DEFAULT)
+  );
   const [poolAddress, setPoolAddress] = useState(POOL_DEFAULT);
   const [relayerUrl, setRelayerUrl] = useState(RELAYER_DEFAULT);
   const [relayerMeshInput, setRelayerMeshInput] = useState(RELAYER_DEFAULT);
+  const [relayerPreset, setRelayerPreset] = useState(matchedPreset ? matchedPreset.id : 'custom');
+  const [customRelayerUrl, setCustomRelayerUrl] = useState(matchedPreset ? '' : RELAYER_DEFAULT);
+  const [poolOverrideEnabled, setPoolOverrideEnabled] = useState(false);
+  const [poolOverrideInput, setPoolOverrideInput] = useState('');
   const [recipient, setRecipient] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [walletChainId, setWalletChainId] = useState(null);
@@ -381,7 +406,8 @@ export default function App() {
   const [note, setNote] = useState('');
   const [root, setRoot] = useState('');
   const [nullifierHash, setNullifierHash] = useState('');
-  const [proofInput, setProofInput] = useState('0x01');
+  const [proofInput, setProofInput] = useState(DEV_PROOF_DEFAULT);
+  const [proofVersion, setProofVersion] = useState(PROOF_VERSION_DEFAULT);
   const [quote, setQuote] = useState(null);
   const [quoteSignature, setQuoteSignature] = useState('');
   const [sessionId, setSessionId] = useState('');
@@ -444,6 +470,11 @@ export default function App() {
   }, [relayerMeshInput, relayerUrl]);
   const activeRelayerKey = normalizeBaseUrl(relayerUrl);
   const activeRelayerHealth = relayerMonitor[activeRelayerKey] || null;
+  const requiredProofVersion = relayerInfo?.requiredProofVersion || '';
+  const displayPoolVersion = relayerInfo?.poolVersion || POOL_VERSION_DEFAULT || '-';
+  const displayRequiredProofVersion = relayerInfo?.requiredProofVersion || PROOF_VERSION_DEFAULT || '-';
+  const proofVersionMismatch =
+    Boolean(requiredProofVersion) && (proofVersion || '').trim() !== requiredProofVersion;
   const effectiveUserAddress = adminState?.userAddress || walletAddress;
   const isPoolOwner = Boolean(
     effectiveUserAddress &&
@@ -469,7 +500,8 @@ export default function App() {
       proofInfo.valid &&
       root &&
       nullifierHash &&
-      recipient
+      recipient &&
+      !proofVersionMismatch
   );
 
   function appendLog(line) {
@@ -492,6 +524,9 @@ export default function App() {
     }
     if (message.includes('fee below base')) {
       return `Quote below pool base fee. Request a new quote (base fee floor is ${baseRelayerFeeHuman}).`;
+    }
+    if (message.includes('proof version mismatch')) {
+      return `${message}. Set proof version to required value shown in Network panel.`;
     }
     return message;
   }
@@ -520,15 +555,45 @@ export default function App() {
   }
 
   async function loadRelayerConfig() {
-    const config = await fetchJson(relayerUrl, '/health', { method: 'GET' });
+    let config;
+    try {
+      config = await fetchJson(relayerUrl, '/health', { method: 'GET' });
+    } catch (_error) {
+      config = await fetchJson(relayerUrl, '/config', { method: 'GET' });
+      appendLog('Relayer /health unavailable, loaded /config fallback');
+    }
     setRelayerInfo(config);
-    if (!poolAddress && config.defaultPool) {
+    if (!poolOverrideEnabled && !POOL_DEFAULT && !poolAddress && config.defaultPool) {
       setPoolAddress(config.defaultPool);
     }
     appendLog(
       `Relayer ok chain=${config.chainId} signer=${config.signer} defaultPool=${config.defaultPool || '-'}`
     );
+    if (config.requiredProofVersion) {
+      setProofVersion(config.requiredProofVersion);
+    }
+    if (!(proofInput || '').trim()) {
+      setProofInput(DEV_PROOF_DEFAULT);
+    }
     setStatus('relayer ready');
+  }
+
+  function generateDevProofHex() {
+    if (!note || !root || !nullifierHash) {
+      return DEV_PROOF_DEFAULT;
+    }
+    try {
+      return ethers.keccak256(
+        ethers.concat([
+          ethers.toUtf8Bytes('bluearc-dev-proof-v1:'),
+          ethers.getBytes(note),
+          ethers.getBytes(root),
+          ethers.getBytes(nullifierHash)
+        ])
+      );
+    } catch (_error) {
+      return DEV_PROOF_DEFAULT;
+    }
   }
 
   async function pingRelayerHealth(baseUrl) {
@@ -847,6 +912,22 @@ export default function App() {
     if (!cleanNote.startsWith('0x')) throw new Error('Note must start with 0x');
     const nf = ethers.keccak256(ethers.concat([ethers.toUtf8Bytes('nf:'), ethers.getBytes(cleanNote)]));
     setNullifierHash(nf);
+    if (!(proofInput || '').trim() || proofInput === DEV_PROOF_DEFAULT) {
+      try {
+        setProofInput(
+          ethers.keccak256(
+            ethers.concat([
+              ethers.toUtf8Bytes('bluearc-dev-proof-v1:'),
+              ethers.getBytes(cleanNote),
+              ethers.getBytes(root || ethers.ZeroHash),
+              ethers.getBytes(nf)
+            ])
+          )
+        );
+      } catch (_error) {
+        setProofInput(DEV_PROOF_DEFAULT);
+      }
+    }
     appendLog('Derived nullifier hash from note');
   }
 
@@ -893,6 +974,9 @@ export default function App() {
     if (!quote) throw new Error('Missing quote');
     if (!sessionId || !sessionKeyHex) throw new Error('Missing encrypted session');
     if (!ethers.isAddress(recipient)) throw new Error('Invalid recipient address');
+    if (proofVersionMismatch) {
+      throw new Error(`proof version mismatch: expected ${requiredProofVersion}`);
+    }
 
     const payload = {
       nonce: crypto.randomUUID(),
@@ -900,6 +984,7 @@ export default function App() {
       quote,
       quoteSignature,
       pool: poolAddress,
+      proofVersion: proofVersion.trim() || undefined,
       proof: parsedProof.hex,
       root,
       nullifierHash,
@@ -933,11 +1018,61 @@ export default function App() {
   }
 
   useEffect(() => {
+    if (!shouldRedirectLegacyDocsPath) return;
+    const path = window.location.pathname || '/docs';
+    const search = window.location.search || '';
+    const hash = window.location.hash || '';
+    const next =
+      path === '/docs' || path === '/docs/'
+        ? '/doc/'
+        : `/doc/docs/${path.slice('/docs/'.length)}${search}${hash}`;
+    window.location.replace(next);
+  }, [shouldRedirectLegacyDocsPath]);
+
+  useEffect(() => {
     if (initRelayerLoadRef.current) return;
     initRelayerLoadRef.current = true;
     runStep('loading relayer config', loadRelayerConfig);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!relayerUrl) return;
+    const handle = setTimeout(() => {
+      loadRelayerConfig().catch(() => {});
+    }, 300);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relayerUrl]);
+
+  useEffect(() => {
+    if (relayerPreset === 'custom') {
+      setRelayerUrl(normalizeBaseUrl(customRelayerUrl || RELAYER_DEFAULT));
+      return;
+    }
+    const selected = RELAYER_API_OPTIONS.find((opt) => opt.id === relayerPreset);
+    if (selected) {
+      setRelayerUrl(normalizeBaseUrl(selected.url));
+    }
+  }, [relayerPreset, customRelayerUrl]);
+
+  useEffect(() => {
+    if (!poolOverrideEnabled) {
+      setPoolAddress(POOL_DEFAULT);
+      return;
+    }
+    const next = poolOverrideInput.trim();
+    if (next) {
+      setPoolAddress(next);
+    }
+  }, [poolOverrideEnabled, poolOverrideInput]);
+
+  useEffect(() => {
+    if ((proofInput || '').trim()) return;
+    if (!note || !root || !nullifierHash) return;
+    setProofInput(generateDevProofHex());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [note, root, nullifierHash]);
 
   useEffect(() => {
     if (!provider || !ethers.isAddress(poolAddress)) return;
@@ -1024,22 +1159,97 @@ export default function App() {
   const chainIdForExplorer = relayerInfo?.chainId || walletChainId || 0;
   const lastTxUrl = txExplorerUrl(chainIdForExplorer, lastConfirmed?.txHash);
 
+  if (isTigerDocsRoute) {
+    return (
+      <div className="page">
+        <section className="testnet-banner" role="status" aria-live="polite">
+          <strong>BlueARC Tiger Docs</strong> <span>Sepolia Testnet Documentation</span>
+        </section>
+        <header className="hero">
+          <h1>BLUEARC // TIGER DOCS</h1>
+          <p>Post-quantum handshake + relayered private withdrawals, explained simply.</p>
+          <img
+            className="hero-art"
+            src="/electrictiger.png"
+            alt="BlueARC electric tiger 8-bit banner art"
+          />
+        </header>
+
+        <section className="panel">
+          <h2>How It Works</h2>
+          <p>1. Deposit fixed amount into PrivacyPoolV2 and save your note.</p>
+          <p>2. Open a relayer session with hybrid ML-KEM-768 + ECDH key exchange.</p>
+          <p>3. Request a signed quote (fee + expiry + chain binding).</p>
+          <p>4. Submit encrypted withdraw payload (AES-GCM envelope).</p>
+          <p>5. Relayer validates quote/signatures/nonce and broadcasts withdraw.</p>
+        </section>
+
+        <section className="panel">
+          <h2>Security Model</h2>
+          <p>On-chain public: deposit/withdraw tx metadata, timing, recipient, relayer address, fee.</p>
+          <p>Protected in transit: withdraw payload via session key encryption.</p>
+          <p>Critical secret: your note. Losing it means losing spend access.</p>
+        </section>
+
+        <section className="panel">
+          <h2>Quick Links</h2>
+          <p>
+            App: <a href="/">/</a>
+          </p>
+          <p>
+            Admin: <a href="/admin">/admin</a>
+          </p>
+          <p>
+            Relayer Health:{' '}
+            <a href="https://relayer-production-86ea.up.railway.app/health" target="_blank" rel="noreferrer">
+              /health
+            </a>
+          </p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
+      <section className="testnet-banner" role="status" aria-live="polite">
+        <strong>Sepolia Testnet Only: Edition</strong>{' '}
+        <span>
+          Need test ETH?{' '}
+          <a href="https://sepolia-faucet.pk910.de/#/" target="_blank" rel="noreferrer">
+            Open Sepolia Faucet
+          </a>
+        </span>
+      </section>
       <header className="hero">
         <h1>BLUEARC // 8BIT</h1>
         <p>On-chain privacy pool with encrypted relayed withdrawals.</p>
+        <img
+          className="hero-art"
+          src="/electrictiger.png"
+          alt="BlueARC electric tiger 8-bit banner art"
+        />
       </header>
 
       <section className="panel">
         <h2>Network</h2>
-        <input value={poolAddress} onChange={(e) => setPoolAddress(e.target.value.trim())} placeholder="Pool address" />
-        <input value={relayerUrl} onChange={(e) => setRelayerUrl(e.target.value.trim())} placeholder="Relayer URL or /api" />
-        <input
-          value={relayerMeshInput}
-          onChange={(e) => setRelayerMeshInput(e.target.value)}
-          placeholder="Relayer mesh URLs (comma-separated)"
-        />
+        <p>Default Pool (V2): <code>{POOL_DEFAULT}</code></p>
+        <label>Relayer API</label>
+        <select value={relayerPreset} onChange={(e) => setRelayerPreset(e.target.value)}>
+          {RELAYER_API_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {opt.label}
+            </option>
+          ))}
+          <option value="custom">Custom URL</option>
+        </select>
+        {relayerPreset === 'custom' ? (
+          <input
+            value={customRelayerUrl}
+            onChange={(e) => setCustomRelayerUrl(e.target.value.trim())}
+            placeholder="Custom relayer URL"
+          />
+        ) : null}
         <div className="row">
           <button onClick={() => runStep('loading relayer config', loadRelayerConfig)}>Load Relayer Config</button>
           <button onClick={() => runStep('connecting wallet', connectWallet)}>Connect Wallet</button>
@@ -1049,8 +1259,35 @@ export default function App() {
         <p>Wallet Chain: {walletChainId ?? '-'}</p>
         <p>Relayer Chain: {relayerInfo?.chainId ?? '-'}</p>
         <p>Relayer Signer: {relayerInfo?.signer || '-'}</p>
+        <p>Pool Version: {displayPoolVersion}</p>
+        <p>Required Proof Version: {displayRequiredProofVersion}</p>
         <p>Pool Denomination: {denominationWei > 0n ? denominationHuman : '-'}</p>
         <p>Pool Base Relayer Fee: {baseRelayerFeeWei > 0n ? baseRelayerFeeHuman : '-'}</p>
+        <details>
+          <summary>Advanced Network</summary>
+          <div className="row">
+            <label>
+              <input
+                type="checkbox"
+                checked={poolOverrideEnabled}
+                onChange={(e) => setPoolOverrideEnabled(e.target.checked)}
+              />{' '}
+              Override Pool Address
+            </label>
+          </div>
+          {poolOverrideEnabled ? (
+            <input
+              value={poolOverrideInput}
+              onChange={(e) => setPoolOverrideInput(e.target.value)}
+              placeholder="Custom pool address (0x...)"
+            />
+          ) : null}
+          <input
+            value={relayerMeshInput}
+            onChange={(e) => setRelayerMeshInput(e.target.value)}
+            placeholder="Relayer mesh URLs (comma-separated)"
+          />
+        </details>
       </section>
 
       <section className="panel">
@@ -1098,8 +1335,9 @@ export default function App() {
         </details>
       </section>
 
+      {isAdminRoute ? (
       <section className="panel">
-        <h2>Admin Portal</h2>
+        <h2>Admin Portal (/admin)</h2>
         <p>
           Pool Owner: {adminState?.poolOwner || '-'}{' '}
           <span className={`badge ${isPoolOwner ? 'ok' : 'warn'}`}>{isPoolOwner ? 'owner' : 'read-only'}</span>
@@ -1194,6 +1432,15 @@ export default function App() {
           </div>
         </details>
       </section>
+      ) : (
+        <section className="panel">
+          <h2>Admin</h2>
+          <p>Admin controls are hidden from the public flow.</p>
+          <p>
+            Open <a href="/admin">/admin</a> with your owner wallet connected to manage pool and treasury controls.
+          </p>
+        </section>
+      )}
 
       <section className="panel">
         <h2>Security & Risk</h2>
@@ -1269,8 +1516,17 @@ export default function App() {
             onChange={(e) => setProofInput(e.target.value)}
             placeholder="Proof input: hex (0x...), base64:<...>, or plain text"
           />
+          <input
+            value={proofVersion}
+            onChange={(e) => setProofVersion(e.target.value.trim())}
+            placeholder="Proof version (example: bluearc-v2)"
+          />
+          {proofVersionMismatch ? (
+            <p className="hint warn">Proof version mismatch. Required: {requiredProofVersion}</p>
+          ) : null}
           <div className="row">
-            <button onClick={() => setProofInput('0x01')}>Use Dev Proof (0x01)</button>
+            <button onClick={() => setProofInput(DEV_PROOF_DEFAULT)}>Use Dev Proof ({DEV_PROOF_DEFAULT})</button>
+            <button onClick={() => setProofInput(generateDevProofHex())}>Generate Dev Proof From Inputs</button>
             <button onClick={() => setProofInput('')}>Clear Proof</button>
           </div>
           <p className={`hint ${proofInfo.valid ? 'ok' : 'warn'}`}>Proof Size: {proofInfo.message}</p>

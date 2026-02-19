@@ -1,0 +1,20 @@
+{
+  "id": "legacy/audit-checklist-coverage",
+  "title": "Audit Checklist Coverage (Knownsec 404) vs BlueARC Tests",
+  "description": "Date: 2026-02-19",
+  "source": "@site/docs/legacy/16-audit-checklist-coverage.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/audit-checklist-coverage",
+  "permalink": "/doc/docs/legacy/audit-checklist-coverage",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 16,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "BlueARC Privacy Protocol - Sepolia Release Report",
+    "permalink": "/doc/docs/legacy/sepolia-release-report"
+  }
+}

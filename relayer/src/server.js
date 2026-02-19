@@ -57,6 +57,7 @@ const submitEnvelopeSchema = z.object({
 const submitPayloadSchema = z.object({
   nonce: z.string().uuid(),
   expiresAt: z.number().int().positive(),
+  proofVersion: z.string().min(1).optional(),
   quote: quotePayloadSchema,
   quoteSignature: z.string().regex(/^0x[a-fA-F0-9]+$/),
   pool: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
@@ -106,6 +107,8 @@ const ABUSE_BLOCK_THRESHOLD = envNum('ABUSE_BLOCK_THRESHOLD', 25);
 const SERVER_KEY_ROTATE_MS = envNum('SERVER_KEY_ROTATE_MS', 3_600_000);
 const DEPLOY_JSON_PATH = process.env.DEPLOY_JSON_PATH || '';
 const DEPLOY_REFRESH_MS = envNum('DEPLOY_REFRESH_MS', 10_000);
+const RUNTIME_POOL_VERSION = process.env.RUNTIME_POOL_VERSION || '';
+const PROOF_VERSION_REQUIRED = process.env.PROOF_VERSION_REQUIRED || '';
 const STORAGE_PRUNE_INTERVAL_MS = envNum('STORAGE_PRUNE_INTERVAL_MS', 300_000);
 const QUOTE_RETENTION_MS = envNum('QUOTE_RETENTION_MS', 3_600_000);
 const JOB_RETENTION_MS = envNum('JOB_RETENTION_MS', 86_400_000);
@@ -117,6 +120,7 @@ const ANON_LOGGING = envBool('ANON_LOGGING', true);
 const ENFORCE_SESSION_BINDING = envBool('ENFORCE_SESSION_BINDING', true);
 const TLS_REQUIRE_CLIENT_CERT = envBool('TLS_REQUIRE_CLIENT_CERT', false);
 const SIGNER_MODE = (process.env.SIGNER_MODE || 'local').toLowerCase();
+const ALLOW_LOCAL_SIGNER_IN_PRODUCTION = envBool('ALLOW_LOCAL_SIGNER_IN_PRODUCTION', false);
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const POOL_ALLOWLIST = new Set(
   (process.env.POOL_ALLOWLIST || '')
@@ -128,7 +132,7 @@ const POOL_ALLOWLIST = new Set(
 if (MIN_FEE_BPS > MAX_FEE_BPS) {
   throw new Error('MIN_FEE_BPS must be <= MAX_FEE_BPS');
 }
-if (process.env.NODE_ENV === 'production' && SIGNER_MODE !== 'remote') {
+if (process.env.NODE_ENV === 'production' && SIGNER_MODE !== 'remote' && !ALLOW_LOCAL_SIGNER_IN_PRODUCTION) {
   throw new Error('Production requires SIGNER_MODE=remote for KMS/HSM-backed signing');
 }
 
@@ -207,6 +211,7 @@ let signerAddress;
 let consecutiveFailureCount = 0;
 let keyMaterial = rotateServerKey();
 let runtimePoolAddress = null;
+let runtimePoolVersion = RUNTIME_POOL_VERSION || null;
 let runtimeDeployLoadedAt = 0;
 
 function rotateServerKey() {
@@ -234,6 +239,7 @@ function getActiveServerKey() {
 function loadDeployRuntimeConfig() {
   if (!DEPLOY_JSON_PATH) {
     runtimePoolAddress = null;
+    runtimePoolVersion = RUNTIME_POOL_VERSION || null;
     runtimeDeployLoadedAt = Date.now();
     return;
   }
@@ -241,13 +247,16 @@ function loadDeployRuntimeConfig() {
   try {
     if (!fs.existsSync(DEPLOY_JSON_PATH)) {
       runtimePoolAddress = null;
+      runtimePoolVersion = RUNTIME_POOL_VERSION || null;
       runtimeDeployLoadedAt = Date.now();
       return;
     }
     const raw = fs.readFileSync(DEPLOY_JSON_PATH, 'utf8');
     const parsed = JSON.parse(raw);
     const candidate = typeof parsed.privacyPool === 'string' ? parsed.privacyPool : '';
+    const candidateVersion = typeof parsed.poolVersion === 'string' ? parsed.poolVersion : '';
     runtimePoolAddress = ethers.isAddress(candidate) ? candidate : null;
+    runtimePoolVersion = candidateVersion || RUNTIME_POOL_VERSION || null;
     runtimeDeployLoadedAt = Date.now();
   } catch (error) {
     logger.warn({ error: error.message, path: DEPLOY_JSON_PATH }, 'failed to load deploy runtime config');
@@ -419,7 +428,9 @@ app.get('/health', async (_req, res) => {
       minFeeBps: MIN_FEE_BPS,
       maxFeeBps: MAX_FEE_BPS,
       proofMaxBytes: PROOF_MAX_BYTES,
+      requiredProofVersion: PROOF_VERSION_REQUIRED || null,
       defaultPool: runtimePoolAddress,
+      poolVersion: runtimePoolVersion,
       deployConfigLoadedAt: runtimeDeployLoadedAt
     });
   } catch (error) {
@@ -437,7 +448,9 @@ app.get('/config', async (_req, res) => {
       minFeeBps: MIN_FEE_BPS,
       maxFeeBps: MAX_FEE_BPS,
       proofMaxBytes: PROOF_MAX_BYTES,
+      requiredProofVersion: PROOF_VERSION_REQUIRED || null,
       defaultPool: runtimePoolAddress,
+      poolVersion: runtimePoolVersion,
       deployConfigLoadedAt: runtimeDeployLoadedAt
     });
   } catch (error) {
@@ -644,6 +657,14 @@ app.post('/submit', makeRedisRateLimiter('submit', RATE_LIMIT_SUBMIT), async (re
     submitRejectedTotal.labels('payload_expired').inc();
     await recordAbuse(req, 'payload_expired');
     return res.status(400).json({ error: 'payload expired' });
+  }
+
+  if (PROOF_VERSION_REQUIRED && payload.proofVersion !== PROOF_VERSION_REQUIRED) {
+    submitRejectedTotal.labels('proof_version_mismatch').inc();
+    await recordAbuse(req, 'proof_version_mismatch');
+    return res.status(400).json({
+      error: `proof version mismatch: expected ${PROOF_VERSION_REQUIRED}`
+    });
   }
 
   const replayTtl = Math.max(10_000, Math.min(NONCE_TTL_MS, payload.expiresAt - now + 30_000));

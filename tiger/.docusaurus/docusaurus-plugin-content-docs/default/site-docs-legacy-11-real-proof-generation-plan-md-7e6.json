@@ -1,0 +1,24 @@
+{
+  "id": "legacy/real-proof-generation-plan",
+  "title": "Real Proof Generation Plan (BlueARC)",
+  "description": "This is the build plan to replace dev proofs (0x01) with real ZK proofs.",
+  "source": "@site/docs/legacy/11-real-proof-generation-plan.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/real-proof-generation-plan",
+  "permalink": "/doc/docs/legacy/real-proof-generation-plan",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 11,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "BlueARC Relayer Hosting, Scaling, and Host Fees",
+    "permalink": "/doc/docs/legacy/relayer-hosting-scaling-fees"
+  },
+  "next": {
+    "title": "Poseidon P0-P3 Checklist (Execution Tracker)",
+    "permalink": "/doc/docs/legacy/poseidon-p0-p3-checklist"
+  }
+}

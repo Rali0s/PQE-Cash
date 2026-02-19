@@ -1,0 +1,24 @@
+{
+  "id": "legacy/contract-interfaces-storage",
+  "title": "1. Contract Interfaces and Storage Layout",
+  "description": "IVerifier",
+  "source": "@site/docs/legacy/01-contract-interfaces-storage.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/contract-interfaces-storage",
+  "permalink": "/doc/docs/legacy/contract-interfaces-storage",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Release and Incident Runbook",
+    "permalink": "/doc/docs/admin/release-and-incident-runbook"
+  },
+  "next": {
+    "title": "2. Exact Public/Private Signal Schema",
+    "permalink": "/doc/docs/legacy/circuit-signal-schema"
+  }
+}

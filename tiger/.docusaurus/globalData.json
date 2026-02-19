@@ -1,0 +1,173 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "path": "/doc/docs",
+      "versions": [
+        {
+          "name": "current",
+          "label": "Next",
+          "isLast": true,
+          "path": "/doc/docs",
+          "mainDocId": "intro",
+          "docs": [
+            {
+              "id": "admin/admin-controls",
+              "path": "/doc/docs/admin/admin-controls",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "admin/admin-handover",
+              "path": "/doc/docs/admin/admin-handover",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "admin/release-and-incident-runbook",
+              "path": "/doc/docs/admin/release-and-incident-runbook",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "intro",
+              "path": "/doc/docs/intro",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/admin-ops",
+              "path": "/doc/docs/legacy/admin-ops",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/audit-checklist-coverage",
+              "path": "/doc/docs/legacy/audit-checklist-coverage",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/branding",
+              "path": "/doc/docs/legacy/branding",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/circuit-signal-schema",
+              "path": "/doc/docs/legacy/circuit-signal-schema",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/contract-interfaces-storage",
+              "path": "/doc/docs/legacy/contract-interfaces-storage",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/docker-runbook",
+              "path": "/doc/docs/legacy/docker-runbook",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/poseidon-p0-p3-checklist",
+              "path": "/doc/docs/legacy/poseidon-p0-p3-checklist",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/product-spec",
+              "path": "/doc/docs/legacy/product-spec",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/real-proof-generation-plan",
+              "path": "/doc/docs/legacy/real-proof-generation-plan",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/relayer-api",
+              "path": "/doc/docs/legacy/relayer-api",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/relayer-hosting-scaling-fees",
+              "path": "/doc/docs/legacy/relayer-hosting-scaling-fees",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/sepolia-release-report",
+              "path": "/doc/docs/legacy/sepolia-release-report",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/sepolia-release-runbook",
+              "path": "/doc/docs/legacy/sepolia-release-runbook",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/smart-contract-security-report",
+              "path": "/doc/docs/legacy/smart-contract-security-report",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/threat-model",
+              "path": "/doc/docs/legacy/threat-model",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "legacy/ui-theme",
+              "path": "/doc/docs/legacy/ui-theme",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/design-choice-relayer-poseidon-v2",
+              "path": "/doc/docs/whitepaper/design-choice-relayer-poseidon-v2",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/pqe-alice-bob",
+              "path": "/doc/docs/whitepaper/pqe-alice-bob",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/pqe-in-the-wild-math",
+              "path": "/doc/docs/whitepaper/pqe-in-the-wild-math",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/pqe-zk-together",
+              "path": "/doc/docs/whitepaper/pqe-zk-together",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/security-audit",
+              "path": "/doc/docs/whitepaper/security-audit",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/unit-tests",
+              "path": "/doc/docs/whitepaper/unit-tests",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/viable-expensive-alternative",
+              "path": "/doc/docs/whitepaper/viable-expensive-alternative",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/whitepaper-system",
+              "path": "/doc/docs/whitepaper/whitepaper-system",
+              "sidebar": "docsSidebar"
+            },
+            {
+              "id": "whitepaper/zk-proofs-alice-bob",
+              "path": "/doc/docs/whitepaper/zk-proofs-alice-bob",
+              "sidebar": "docsSidebar"
+            }
+          ],
+          "draftIds": [],
+          "sidebars": {
+            "docsSidebar": {
+              "link": {
+                "path": "/doc/docs/intro",
+                "label": "intro"
+              }
+            }
+          }
+        }
+      ],
+      "breadcrumbs": true
+    }
+  }
+}

@@ -20,3 +20,11 @@ relayer/.env.example
 relayer/.env.example
 web/env.sample
 relayer/.env.example
+railway/relayer.env.production.template
+.gitignore
+railway/web.env.production.template
+railway/web.env.template
+.gitignore
+relayer/.env.example
+railway/relayer.env.template
+relayer/.env.example

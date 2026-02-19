@@ -1,0 +1,16 @@
+{
+  "chainId": 11155111,
+  "deployer": "0x5F1667Ee0aAAF2bF9750125598FA3f7657882C12",
+  "externalVerifier": "0x5d9aB94bB4B0d4b7660Ce5F44dE46894DF0D2466",
+  "externalVerifierBackend": "bytes",
+  "externalVerifierDeployed": false,
+  "poolVersion": "v2",
+  "poseidonHasher": "0x0C6a0f38a95D00096aD3aCbaB30Cc4D2aE5196c4",
+  "poseidonHasherDeployed": false,
+  "verifierAdapter": "0xf09a2593da7a1aC97C4225580A890FB8401B42F9",
+  "treasury": "0x4B46662aA215982D7ca8dFB241FfDD5F1c757398",
+  "privacyPool": "0xBeBE31Bf60f55CfE7caC13162e88a628eB637667",
+  "denomination": "100000000000000000",
+  "baseRelayerFee": "1000000000000000",
+  "protocolFeeBps": 50
+}

@@ -7,7 +7,11 @@
     "test": "hardhat test",
     "node": "hardhat node",
     "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:v2:local": "POOL_VERSION=v2 hardhat run scripts/deploy.js --network localhost",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:v2:sepolia": "POOL_VERSION=v2 hardhat run scripts/deploy.js --network sepolia",
+    "preflight:sepolia": "hardhat run scripts/sepolia-preflight.js --network sepolia",
+    "release:v2:sepolia": "POOL_VERSION=v2 DEPLOY_OUTPUT=deployments/sepolia-v2.latest.json hardhat run scripts/deploy.js --network sepolia",
     "rotate:verifier": "hardhat run scripts/rotate-verifier.js --network localhost"
   },
   "devDependencies": {

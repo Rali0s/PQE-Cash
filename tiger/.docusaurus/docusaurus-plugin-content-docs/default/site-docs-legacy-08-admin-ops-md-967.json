@@ -1,0 +1,24 @@
+{
+  "id": "legacy/admin-ops",
+  "title": "8. Admin Ops",
+  "description": "Deploy with real verifier (production default)",
+  "source": "@site/docs/legacy/08-admin-ops.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/admin-ops",
+  "permalink": "/doc/docs/legacy/admin-ops",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 8,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "7. Docker Runbook",
+    "permalink": "/doc/docs/legacy/docker-runbook"
+  },
+  "next": {
+    "title": "9. Branding",
+    "permalink": "/doc/docs/legacy/branding"
+  }
+}

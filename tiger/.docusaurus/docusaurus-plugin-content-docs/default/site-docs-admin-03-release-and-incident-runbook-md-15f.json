@@ -1,0 +1,26 @@
+{
+  "id": "admin/release-and-incident-runbook",
+  "title": "Release and Incident Runbook",
+  "description": "Release Sequence",
+  "source": "@site/docs/admin/03-release-and-incident-runbook.md",
+  "sourceDirName": "admin",
+  "slug": "/admin/release-and-incident-runbook",
+  "permalink": "/doc/docs/admin/release-and-incident-runbook",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "title": "Release and Incident Runbook"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Admin Controls Reference",
+    "permalink": "/doc/docs/admin/admin-controls"
+  },
+  "next": {
+    "title": "1. Contract Interfaces and Storage Layout",
+    "permalink": "/doc/docs/legacy/contract-interfaces-storage"
+  }
+}

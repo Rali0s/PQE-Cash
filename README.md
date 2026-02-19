@@ -17,41 +17,54 @@ Branding:
 
 ### 1) Contracts
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cd <repo-root>/contracts
 npm install
 npm run build
 npm run node
 ```
 In a second terminal:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cd <repo-root>/contracts
 EXTERNAL_VERIFIER_ADDRESS=0x... EXTERNAL_VERIFIER_BACKEND=bytes npm run deploy:local
 ```
 
 Rotate verifier safely with event/state checks:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cd <repo-root>/contracts
 ADAPTER_ADDRESS=0x... NEW_VERIFIER_ADDRESS=0x... EXPECTED_OLD_VERIFIER=0x... npm run rotate:verifier
 ```
 
 Sepolia deploy:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cd <repo-root>/contracts
 cp env.sample .env
 # fill DEPLOYER_PRIVATE_KEY and EXTERNAL_VERIFIER_ADDRESS
 npm install
 npm run deploy:sepolia
 ```
 
+Sepolia V2 release flow:
+```bash
+cd <repo-root>/contracts
+npm run preflight:sepolia
+npm run release:v2:sepolia
+```
+
 For local-only dev verifier deployments:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/contracts
+cd <repo-root>/contracts
 ALLOW_DEV_VERIFIER=true npm run deploy:local
+```
+
+Poseidon-ready `PrivacyPoolV2` local deployment (dev hasher):
+```bash
+cd <repo-root>/contracts
+ALLOW_DEV_VERIFIER=true POOL_VERSION=v2 ALLOW_DEV_POSEIDON_HASHER=true npm run deploy:local
 ```
 
 ### 2) Relayer
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/relayer
+cd <repo-root>/relayer
 cp .env.example .env
 # set POSTGRES_URL, REDIS_URL, and signer config
 npm install
@@ -59,7 +72,7 @@ npm run dev
 ```
 If Postgres/Redis are not running locally, start them with:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash
+cd <repo-root>
 docker-compose up -d postgres redis
 ```
 Default project ports are isolated to avoid conflicts with other stacks:
@@ -68,14 +81,14 @@ Default project ports are isolated to avoid conflicts with other stacks:
 
 Relay operator fee sweep:
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/relayer
+cd <repo-root>/relayer
 # set RELAYER_PAYOUT_ADDRESS + RELAYER_PRIVATE_KEY + RPC_URL
 npm run sweep:fees
 ```
 
 ### 3) Frontend
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash/web
+cd <repo-root>/web
 cp env.sample .env.local
 npm install
 npm run dev
@@ -85,7 +98,7 @@ By default the UI uses `/api` and auto-loads relayer health/config (including `d
 
 ### 4) One-command Docker
 ```bash
-cd /Users/proteu5/Documents/Github/PQE-Cash
+cd <repo-root>
 docker compose up --build
 ```
 This starts:
@@ -109,10 +122,16 @@ This starts:
 - Relayer anonymity is privacy-hardened but not absolute; see docs.
 
 ## Relay Host Packaging
-- Railway service config: `/Users/proteu5/Documents/Github/PQE-Cash/relayer/railway.json`
-- Host compose stack (good for Raspberry Pi/VPS): `/Users/proteu5/Documents/Github/PQE-Cash/relayer/docker-compose.host.yml`
+- Railway service config: `<repo-root>/relayer/railway.json`
+- Host compose stack (good for Raspberry Pi/VPS): `<repo-root>/relayer/docker-compose.host.yml`
 - Host env templates:
-  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.host.example`
-  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.railway.example`
-  - `/Users/proteu5/Documents/Github/PQE-Cash/relayer/.env.rpi.example`
-- Full runbook: `/Users/proteu5/Documents/Github/PQE-Cash/docs/10-relayer-hosting-scaling-fees.md`
+  - `<repo-root>/relayer/.env.host.example`
+  - `<repo-root>/relayer/.env.railway.example`
+  - `<repo-root>/relayer/.env.rpi.example`
+- Full runbook: `<repo-root>/docs/10-relayer-hosting-scaling-fees.md`
+- Master Railway upstream bundle (testnet-ready): `<repo-root>/railway/README.md`
+
+## Real Proof Generation
+- Implementation plan: `<repo-root>/docs/11-real-proof-generation-plan.md`
+- Circuit workspace scaffold: `<repo-root>/circuits/README.md`
+- Execution checklist: `<repo-root>/docs/12-poseidon-p0-p3-checklist.md`

@@ -1,0 +1,26 @@
+{
+  "id": "whitepaper/whitepaper-system",
+  "title": "F) Whitepaper - How Relayer and Contracts Work",
+  "description": "Protocol Components",
+  "source": "@site/docs/whitepaper/06-whitepaper-system.md",
+  "sourceDirName": "whitepaper",
+  "slug": "/whitepaper/whitepaper-system",
+  "permalink": "/doc/docs/whitepaper/whitepaper-system",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 6,
+  "frontMatter": {
+    "title": "F) Whitepaper - How Relayer and Contracts Work"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "E) Viable and Expensive Alternative",
+    "permalink": "/doc/docs/whitepaper/viable-expensive-alternative"
+  },
+  "next": {
+    "title": "G) Published Unit Tests",
+    "permalink": "/doc/docs/whitepaper/unit-tests"
+  }
+}

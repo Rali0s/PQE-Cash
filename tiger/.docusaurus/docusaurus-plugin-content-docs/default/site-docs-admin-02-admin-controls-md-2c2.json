@@ -1,0 +1,26 @@
+{
+  "id": "admin/admin-controls",
+  "title": "Admin Controls Reference",
+  "description": "Admin UI is exposed at /admin.",
+  "source": "@site/docs/admin/02-admin-controls.md",
+  "sourceDirName": "admin",
+  "slug": "/admin/admin-controls",
+  "permalink": "/doc/docs/admin/admin-controls",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "title": "Admin Controls Reference"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Admin Handover and Continuity",
+    "permalink": "/doc/docs/admin/admin-handover"
+  },
+  "next": {
+    "title": "Release and Incident Runbook",
+    "permalink": "/doc/docs/admin/release-and-incident-runbook"
+  }
+}

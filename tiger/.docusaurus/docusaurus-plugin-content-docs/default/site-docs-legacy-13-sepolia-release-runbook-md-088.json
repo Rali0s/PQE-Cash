@@ -1,0 +1,24 @@
+{
+  "id": "legacy/sepolia-release-runbook",
+  "title": "Sepolia Release Runbook (PrivacyPoolV2)",
+  "description": "1) Required Env (contracts/.env)",
+  "source": "@site/docs/legacy/13-sepolia-release-runbook.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/sepolia-release-runbook",
+  "permalink": "/doc/docs/legacy/sepolia-release-runbook",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 13,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "Poseidon P0-P3 Checklist (Execution Tracker)",
+    "permalink": "/doc/docs/legacy/poseidon-p0-p3-checklist"
+  },
+  "next": {
+    "title": "BlueARC Privacy Protocol - Smart Contract Security Validation Report",
+    "permalink": "/doc/docs/legacy/smart-contract-security-report"
+  }
+}

@@ -450,6 +450,230 @@
       "artifacts": [
         "IProtocolTreasury"
       ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/PrivacyPoolV2.sol": {
+      "lastModificationDate": 1771494394337,
+      "contentHash": "9300aee7bc9681c84cefab4f6f250a5e",
+      "sourceName": "contracts/PrivacyPoolV2.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IVerifier.sol",
+        "./IPoseidonHasher.sol",
+        "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/ReentrancyGuard.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "PrivacyPoolV2"
+      ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/IPoseidonHasher.sol": {
+      "lastModificationDate": 1771494334549,
+      "contentHash": "063b076ec1aa6395c5a745577f30ca34",
+      "sourceName": "contracts/IPoseidonHasher.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "IPoseidonHasher"
+      ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/PoseidonHasherMock.sol": {
+      "lastModificationDate": 1771494342300,
+      "contentHash": "482e5057e90b9e46b6a89e6a8852b7e2",
+      "sourceName": "contracts/PoseidonHasherMock.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IPoseidonHasher.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "PoseidonHasherMock"
+      ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/test/DevExternalPqVerifierUint.sol": {
+      "lastModificationDate": 1771496017032,
+      "contentHash": "65aafe7c0adf4233273df73890c9df6f",
+      "sourceName": "contracts/test/DevExternalPqVerifierUint.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "DevExternalPqVerifierUint"
+      ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/test/ReenterWithdrawRecipient.sol": {
+      "lastModificationDate": 1771496027969,
+      "contentHash": "122fd017c9cae5a2420bdcba1387678e",
+      "sourceName": "contracts/test/ReenterWithdrawRecipient.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "IWithdrawPool",
+        "ReenterWithdrawRecipient"
+      ]
+    },
+    "/Users/proteu5/Documents/Github/PQE-Cash/contracts/contracts/test/FieldBoundedExternalVerifier.sol": {
+      "lastModificationDate": 1771496461222,
+      "contentHash": "a02c786d757e493b704198f043bec546",
+      "sourceName": "contracts/test/FieldBoundedExternalVerifier.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "FieldBoundedExternalVerifier"
+      ]
     }
   }
 }

@@ -1,0 +1,26 @@
+{
+  "id": "whitepaper/design-choice-relayer-poseidon-v2",
+  "title": "D) Why Relayer + Poseidon V2 Circuits",
+  "description": "Why Relayer-First",
+  "source": "@site/docs/whitepaper/04-design-choice-relayer-poseidon-v2.md",
+  "sourceDirName": "whitepaper",
+  "slug": "/whitepaper/design-choice-relayer-poseidon-v2",
+  "permalink": "/doc/docs/whitepaper/design-choice-relayer-poseidon-v2",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "title": "D) Why Relayer + Poseidon V2 Circuits"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "C) How PQE and ZK Work Together",
+    "permalink": "/doc/docs/whitepaper/pqe-zk-together"
+  },
+  "next": {
+    "title": "E) Viable and Expensive Alternative",
+    "permalink": "/doc/docs/whitepaper/viable-expensive-alternative"
+  }
+}

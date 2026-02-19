@@ -1,0 +1,26 @@
+{
+  "id": "whitepaper/pqe-in-the-wild-math",
+  "title": "In-the-Wild PQE Math (ML-KEM)",
+  "description": "This page adds practical ML-KEM deployment context and lightweight math framing for BlueARC.",
+  "source": "@site/docs/whitepaper/09-pqe-in-the-wild-math.md",
+  "sourceDirName": "whitepaper",
+  "slug": "/whitepaper/pqe-in-the-wild-math",
+  "permalink": "/doc/docs/whitepaper/pqe-in-the-wild-math",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 9,
+  "frontMatter": {
+    "title": "In-the-Wild PQE Math (ML-KEM)"
+  },
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "H) Published Security Audit Materials",
+    "permalink": "/doc/docs/whitepaper/security-audit"
+  },
+  "next": {
+    "title": "Admin Handover and Continuity",
+    "permalink": "/doc/docs/admin/admin-handover"
+  }
+}

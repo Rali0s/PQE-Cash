@@ -1,0 +1,24 @@
+{
+  "id": "legacy/relayer-hosting-scaling-fees",
+  "title": "BlueARC Relayer Hosting, Scaling, and Host Fees",
+  "description": "Goals",
+  "source": "@site/docs/legacy/10-relayer-hosting-scaling-fees.md",
+  "sourceDirName": "legacy",
+  "slug": "/legacy/relayer-hosting-scaling-fees",
+  "permalink": "/doc/docs/legacy/relayer-hosting-scaling-fees",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 10,
+  "frontMatter": {},
+  "sidebar": "docsSidebar",
+  "previous": {
+    "title": "9. Branding",
+    "permalink": "/doc/docs/legacy/branding"
+  },
+  "next": {
+    "title": "Real Proof Generation Plan (BlueARC)",
+    "permalink": "/doc/docs/legacy/real-proof-generation-plan"
+  }
+}

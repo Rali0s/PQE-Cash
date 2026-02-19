@@ -1,0 +1,22 @@
+{
+  "id": "intro",
+  "title": "Tiger Docs Overview",
+  "description": "Tiger Docs is the public documentation portal for BlueARC:",
+  "source": "@site/docs/intro.md",
+  "sourceDirName": ".",
+  "slug": "/intro",
+  "permalink": "/doc/docs/intro",
+  "draft": false,
+  "unlisted": false,
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "slug": "/intro",
+    "title": "Tiger Docs Overview"
+  },
+  "sidebar": "docsSidebar",
+  "next": {
+    "title": "A) PQE in Alice and Bob Terms",
+    "permalink": "/doc/docs/whitepaper/pqe-alice-bob"
+  }
+}
