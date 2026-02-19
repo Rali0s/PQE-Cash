@@ -34,10 +34,38 @@ const TREASURY_ABI = [
 const RELAYER_DEFAULT =
   import.meta.env.VITE_RELAYER_URL || 'https://relayer-production-86ea.up.railway.app';
 const POOL_V2_HARDCODED = '0xBeBE31Bf60f55CfE7caC13162e88a628eB637667';
+const MAINNET_POOL_V2 = '0xcDcdF747d7Ba38EeE6e899e0dEeccd1102449a8e';
 const POOL_DEFAULT = import.meta.env.VITE_POOL_ADDRESS || POOL_V2_HARDCODED;
 const PROOF_VERSION_DEFAULT = import.meta.env.VITE_PROOF_VERSION || 'bluearc-v2';
 const POOL_VERSION_DEFAULT = import.meta.env.VITE_POOL_VERSION || 'v2';
 const DEV_PROOF_DEFAULT = import.meta.env.VITE_DEV_PROOF || '0x01';
+const NETWORK_DEFAULT = (import.meta.env.VITE_DEFAULT_NETWORK || 'sepolia').toLowerCase() === 'mainnet' ? 'mainnet' : 'sepolia';
+const NETWORK_PROFILES = {
+  sepolia: {
+    id: 'sepolia',
+    label: 'Testnet Live (Sepolia)',
+    chainId: 11155111,
+    poolAddress: POOL_V2_HARDCODED,
+    relayerUrl: RELAYER_DEFAULT,
+    proofVersion: 'bluearc-v2'
+  },
+  mainnet: {
+    id: 'mainnet',
+    label: 'Mainnet Live (Use at your own risk)',
+    chainId: 1,
+    poolAddress: MAINNET_POOL_V2,
+    relayerUrl: '',
+    proofVersion: 'bluearc-v2'
+  }
+};
+const MAINNET_DEPLOYMENT = {
+  deployer: '0xA01d4586f6258861dEfd4F1Ded795052C0E49d4e',
+  externalVerifier: '0xe6740BcB7f03F5A6573D431B8aBEcAE8B195D3C2',
+  poseidonHasher: '0xfD88A344b01A2c77bc8497808953cF1292E49e85',
+  verifierAdapter: '0xE7289782a02388249CFC59962EA85f445041738a',
+  privacyPoolV2: '0xcDcdF747d7Ba38EeE6e899e0dEeccd1102449a8e',
+  denominationWei: '100000000000000000'
+};
 const RELAYER_API_OPTIONS = [
   {
     id: 'railway',
@@ -387,10 +415,12 @@ export default function App() {
     currentPath === '/docs' || currentPath === '/docs/' || currentPath.startsWith('/docs/');
   const isAdminRoute = window.location.pathname.startsWith('/admin');
   const isTigerDocsRoute = window.location.pathname.startsWith('/tiger-docs');
+  const [networkProfile, setNetworkProfile] = useState(NETWORK_DEFAULT);
+  const [defaultPoolAddress, setDefaultPoolAddress] = useState(NETWORK_PROFILES[NETWORK_DEFAULT].poolAddress);
   const matchedPreset = RELAYER_API_OPTIONS.find(
     (opt) => normalizeBaseUrl(opt.url) === normalizeBaseUrl(RELAYER_DEFAULT)
   );
-  const [poolAddress, setPoolAddress] = useState(POOL_DEFAULT);
+  const [poolAddress, setPoolAddress] = useState(defaultPoolAddress || POOL_DEFAULT);
   const [relayerUrl, setRelayerUrl] = useState(RELAYER_DEFAULT);
   const [relayerMeshInput, setRelayerMeshInput] = useState(RELAYER_DEFAULT);
   const [relayerPreset, setRelayerPreset] = useState(matchedPreset ? matchedPreset.id : 'custom');
@@ -1057,15 +1087,49 @@ export default function App() {
   }, [relayerPreset, customRelayerUrl]);
 
   useEffect(() => {
+    const profile = NETWORK_PROFILES[networkProfile] || NETWORK_PROFILES.sepolia;
+    setDefaultPoolAddress(profile.poolAddress);
+    setProofVersion(profile.proofVersion);
     if (!poolOverrideEnabled) {
-      setPoolAddress(POOL_DEFAULT);
+      setPoolAddress(profile.poolAddress);
+    }
+
+    const profileRelayer = (profile.relayerUrl || '').trim();
+    if (!profileRelayer) {
+      setRelayerPreset('custom');
+      setCustomRelayerUrl('');
+      setRelayerUrl('');
+      setRelayerMeshInput('');
+      setRelayerInfo(null);
+      appendLog(`Network profile set to ${profile.label}. Configure relayer URL manually for this mode.`);
+      return;
+    }
+    const selected = RELAYER_API_OPTIONS.find(
+      (opt) => normalizeBaseUrl(opt.url) === normalizeBaseUrl(profileRelayer)
+    );
+    if (selected) {
+      setRelayerPreset(selected.id);
+      setCustomRelayerUrl('');
+      setRelayerUrl(normalizeBaseUrl(selected.url));
+    } else {
+      setRelayerPreset('custom');
+      setCustomRelayerUrl(profileRelayer);
+      setRelayerUrl(normalizeBaseUrl(profileRelayer));
+    }
+    setRelayerMeshInput(profileRelayer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networkProfile]);
+
+  useEffect(() => {
+    if (!poolOverrideEnabled) {
+      setPoolAddress(defaultPoolAddress);
       return;
     }
     const next = poolOverrideInput.trim();
     if (next) {
       setPoolAddress(next);
     }
-  }, [poolOverrideEnabled, poolOverrideInput]);
+  }, [poolOverrideEnabled, poolOverrideInput, defaultPoolAddress]);
 
   useEffect(() => {
     if ((proofInput || '').trim()) return;
@@ -1212,8 +1276,8 @@ export default function App() {
 
   return (
     <div className="page">
-      <section className="testnet-banner" role="status" aria-live="polite">
-        <strong>Sepolia Testnet Only: Edition</strong>{' '}
+      <section className={`testnet-banner ${networkProfile === 'mainnet' ? 'risk' : ''}`} role="status" aria-live="polite">
+        <strong>Testnet Live. Mainnet Live At Your Own Risk.</strong>{' '}
         <span>
           Need test ETH?{' '}
           <a href="https://sepolia-faucet.pk910.de/#/" target="_blank" rel="noreferrer">
@@ -1233,7 +1297,20 @@ export default function App() {
 
       <section className="panel">
         <h2>Network</h2>
-        <p>Default Pool (V2): <code>{POOL_DEFAULT}</code></p>
+        <label>Environment</label>
+        <select value={networkProfile} onChange={(e) => setNetworkProfile(e.target.value)}>
+          <option value="sepolia">Testnet | Sepolia</option>
+          <option value="mainnet">Mainnet | Ethereum</option>
+        </select>
+        <p>
+          Active profile: <strong>{NETWORK_PROFILES[networkProfile]?.label || '-'}</strong>
+        </p>
+        {networkProfile === 'mainnet' ? (
+          <p className="hint warn">
+            Mainnet mode is live-risk. Verify addresses, fees, relayer policy, and wallet chain before any action.
+          </p>
+        ) : null}
+        <p>Default Pool (V2): <code>{defaultPoolAddress || POOL_DEFAULT}</code></p>
         <label>Relayer API</label>
         <select value={relayerPreset} onChange={(e) => setRelayerPreset(e.target.value)}>
           {RELAYER_API_OPTIONS.map((opt) => (
@@ -1288,6 +1365,18 @@ export default function App() {
             placeholder="Relayer mesh URLs (comma-separated)"
           />
         </details>
+      </section>
+
+      <section className="panel">
+        <h2>Mainnet Live Notice</h2>
+        <p>Network: mainnet (chainId=1)</p>
+        <p>Deployer: <code>{MAINNET_DEPLOYMENT.deployer}</code></p>
+        <p>ExternalVerifier (bytes backend): <code>{MAINNET_DEPLOYMENT.externalVerifier}</code></p>
+        <p>PoseidonHasher: <code>{MAINNET_DEPLOYMENT.poseidonHasher}</code></p>
+        <p>PqVerifierAdapter: <code>{MAINNET_DEPLOYMENT.verifierAdapter}</code></p>
+        <p>PrivacyPool(v2): <code>{MAINNET_DEPLOYMENT.privacyPoolV2}</code></p>
+        <p>Denomination (wei): <code>{MAINNET_DEPLOYMENT.denominationWei}</code></p>
+        <p className="hint warn">Use mainnet only if you understand operational and privacy tradeoffs.</p>
       </section>
 
       <section className="panel">
@@ -1473,6 +1562,13 @@ export default function App() {
           </p>
           <p>
             Prefer relayed withdrawals, vary timing where possible, and verify chain/network before submitting.
+          </p>
+        </details>
+        <details>
+          <summary>Future: BlueArc-v3</summary>
+          <p>
+            BlueArc-v3 is planned to incorporate deeper on-chain ZK proof workflows, stronger proof system integration,
+            and additional protocol hardening beyond the current release.
           </p>
         </details>
       </section>

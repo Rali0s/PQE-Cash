@@ -84,6 +84,16 @@ function envNum(name, fallback) {
   return parsed;
 }
 
+function envNumOptional(name) {
+  const value = process.env[name];
+  if (value === undefined || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid number for ${name}`);
+  }
+  return parsed;
+}
+
 const PORT = envNum('PORT', 8080);
 const HOST = process.env.HOST || '0.0.0.0';
 const RPC_URL = process.env.RPC_URL || 'http://127.0.0.1:8545';
@@ -121,6 +131,9 @@ const ENFORCE_SESSION_BINDING = envBool('ENFORCE_SESSION_BINDING', true);
 const TLS_REQUIRE_CLIENT_CERT = envBool('TLS_REQUIRE_CLIENT_CERT', false);
 const SIGNER_MODE = (process.env.SIGNER_MODE || 'local').toLowerCase();
 const ALLOW_LOCAL_SIGNER_IN_PRODUCTION = envBool('ALLOW_LOCAL_SIGNER_IN_PRODUCTION', false);
+const EXPECTED_CHAIN_ID = envNumOptional('EXPECTED_CHAIN_ID');
+const REQUIRE_POOL_ALLOWLIST_IN_PRODUCTION = envBool('REQUIRE_POOL_ALLOWLIST_IN_PRODUCTION', true);
+const REQUIRE_PROOF_VERSION_IN_PRODUCTION = envBool('REQUIRE_PROOF_VERSION_IN_PRODUCTION', true);
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 const POOL_ALLOWLIST = new Set(
   (process.env.POOL_ALLOWLIST || '')
@@ -134,6 +147,12 @@ if (MIN_FEE_BPS > MAX_FEE_BPS) {
 }
 if (process.env.NODE_ENV === 'production' && SIGNER_MODE !== 'remote' && !ALLOW_LOCAL_SIGNER_IN_PRODUCTION) {
   throw new Error('Production requires SIGNER_MODE=remote for KMS/HSM-backed signing');
+}
+if (process.env.NODE_ENV === 'production' && REQUIRE_POOL_ALLOWLIST_IN_PRODUCTION && POOL_ALLOWLIST.size === 0) {
+  throw new Error('Production requires non-empty POOL_ALLOWLIST');
+}
+if (process.env.NODE_ENV === 'production' && REQUIRE_PROOF_VERSION_IN_PRODUCTION && !PROOF_VERSION_REQUIRED) {
+  throw new Error('Production requires PROOF_VERSION_REQUIRED');
 }
 
 const logger = pino({ level: LOG_LEVEL });
@@ -420,9 +439,12 @@ app.get('/health', async (_req, res) => {
   try {
     await storage.ping();
     const network = await provider.getNetwork();
+    const liveChainId = Number(network.chainId);
     return res.json({
       ok: true,
-      chainId: Number(network.chainId),
+      chainId: liveChainId,
+      expectedChainId: EXPECTED_CHAIN_ID,
+      chainIdMatchesExpectation: EXPECTED_CHAIN_ID == null ? null : liveChainId === EXPECTED_CHAIN_ID,
       signer: signerAddress,
       pqKemAlgorithm: 'ML-KEM-768',
       minFeeBps: MIN_FEE_BPS,
@@ -441,8 +463,11 @@ app.get('/health', async (_req, res) => {
 app.get('/config', async (_req, res) => {
   try {
     const network = await provider.getNetwork();
+    const liveChainId = Number(network.chainId);
     return res.json({
-      chainId: Number(network.chainId),
+      chainId: liveChainId,
+      expectedChainId: EXPECTED_CHAIN_ID,
+      chainIdMatchesExpectation: EXPECTED_CHAIN_ID == null ? null : liveChainId === EXPECTED_CHAIN_ID,
       signer: signerAddress,
       pqKemAlgorithm: 'ML-KEM-768',
       minFeeBps: MIN_FEE_BPS,
@@ -844,6 +869,11 @@ async function start() {
   await storage.init();
   await storage.ping();
   signerAddress = await signer.getAddress();
+  const network = await provider.getNetwork();
+  const liveChainId = Number(network.chainId);
+  if (EXPECTED_CHAIN_ID != null && liveChainId !== EXPECTED_CHAIN_ID) {
+    throw new Error(`chainId mismatch: expected ${EXPECTED_CHAIN_ID} got ${liveChainId}`);
+  }
   loadDeployRuntimeConfig();
 
   const pruneHandle = setInterval(async () => {
@@ -873,6 +903,8 @@ async function start() {
         protocol,
         mtls,
         signer: signerAddress,
+        chainId: liveChainId,
+        expectedChainId: EXPECTED_CHAIN_ID,
         minFeeBps: MIN_FEE_BPS,
         maxFeeBps: MAX_FEE_BPS
       },

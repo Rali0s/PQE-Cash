@@ -3,6 +3,9 @@ require('dotenv').config();
 
 const sepoliaRpcUrl = process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
 const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY || '';
+const mainnetRpcUrl = process.env.MAINNET_RPC_URL || 'https://ethereum-rpc.publicnode.com';
+const mainnetDeployerPrivateKey =
+  process.env.MAINNET_DEPLOYER_PRIVATE_KEY || process.env.DEPLOYER_MAINNET_PRIVATE_KEY || '';
 
 module.exports = {
   solidity: {
@@ -21,6 +24,10 @@ module.exports = {
     sepolia: {
       url: sepoliaRpcUrl,
       accounts: deployerPrivateKey ? [deployerPrivateKey] : []
+    },
+    mainnet: {
+      url: mainnetRpcUrl,
+      accounts: mainnetDeployerPrivateKey ? [mainnetDeployerPrivateKey] : []
     }
   }
 };

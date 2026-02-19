@@ -52,6 +52,12 @@ body {
   text-shadow: 0 0 6px rgba(30, 210, 255, 0.35);
 }
 
+.testnet-banner.risk {
+  border-color: #ff9e4f;
+  background: linear-gradient(90deg, rgba(92, 42, 0, 0.85), rgba(44, 20, 0, 0.95));
+  color: #ffe3c4;
+}
+
 .testnet-banner a {
   color: #8fffbe;
 }

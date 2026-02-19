@@ -11,6 +11,8 @@ PROJECT_ID="${PROJECT_ID:-}"
 
 RELAYER_ENV_FILE="${RELAYER_ENV_FILE:-$SCRIPT_DIR/relayer.env.production.template}"
 WEB_ENV_FILE="${WEB_ENV_FILE:-$SCRIPT_DIR/web.env.production.template}"
+TARGET_CHAIN_ID="${TARGET_CHAIN_ID:-11155111}"
+TARGET_POOL_ADDRESS="${TARGET_POOL_ADDRESS:-0xBeBE31Bf60f55CfE7caC13162e88a628eB637667}"
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -63,6 +65,10 @@ railway variable set --service relayer "CORS_ORIGIN=$CORS_ORIGIN" --skip-deploys
 railway variable set --service relayer "ALLOW_INSECURE_HTTP=false" --skip-deploys >/dev/null
 railway variable set --service relayer "RUNTIME_POOL_VERSION=v2" --skip-deploys >/dev/null
 railway variable set --service relayer "PROOF_VERSION_REQUIRED=bluearc-v2" --skip-deploys >/dev/null
+railway variable set --service relayer "EXPECTED_CHAIN_ID=$TARGET_CHAIN_ID" --skip-deploys >/dev/null
+railway variable set --service relayer "POOL_ALLOWLIST=$TARGET_POOL_ADDRESS" --skip-deploys >/dev/null
+railway variable set --service relayer "REQUIRE_POOL_ALLOWLIST_IN_PRODUCTION=true" --skip-deploys >/dev/null
+railway variable set --service relayer "REQUIRE_PROOF_VERSION_IN_PRODUCTION=true" --skip-deploys >/dev/null
 
 if [[ -n "${SIGNER_SERVICE_API_KEY:-}" ]]; then
   railway variable set --service relayer "SIGNER_SERVICE_API_KEY=$SIGNER_SERVICE_API_KEY" --skip-deploys >/dev/null
@@ -75,9 +81,14 @@ if [[ -n "${REDIS_URL:-}" ]]; then
 fi
 
 railway variable set --service web "VITE_RELAYER_URL=$RELAYER_PUBLIC_URL" --skip-deploys >/dev/null
-railway variable set --service web "VITE_POOL_ADDRESS=0xBeBE31Bf60f55CfE7caC13162e88a628eB637667" --skip-deploys >/dev/null
+railway variable set --service web "VITE_POOL_ADDRESS=$TARGET_POOL_ADDRESS" --skip-deploys >/dev/null
 railway variable set --service web "VITE_POOL_VERSION=v2" --skip-deploys >/dev/null
 railway variable set --service web "VITE_PROOF_VERSION=bluearc-v2" --skip-deploys >/dev/null
+if [[ "$TARGET_CHAIN_ID" == "1" ]]; then
+  railway variable set --service web "VITE_DEFAULT_NETWORK=mainnet" --skip-deploys >/dev/null
+else
+  railway variable set --service web "VITE_DEFAULT_NETWORK=sepolia" --skip-deploys >/dev/null
+fi
 
 log "Deploying relayer and web"
 railway up --service relayer --path-as-root --detach "$REPO_ROOT/relayer" >/dev/null
@@ -85,4 +96,4 @@ railway up --service web --path-as-root --detach "$REPO_ROOT/web" >/dev/null
 
 log "Production bootstrap submitted"
 log "Run: railway service status --all"
-log "Verify: relayer /health has chainId=11155111, poolVersion=v2, requiredProofVersion=bluearc-v2"
+log "Verify: relayer /health has chainId=$TARGET_CHAIN_ID, poolVersion=v2, requiredProofVersion=bluearc-v2"
